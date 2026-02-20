@@ -1,0 +1,61 @@
+# ─── Python ───
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ─── Virtual Environment ───
+.venv/
+.VENV/
+venv/
+env/
+
+# ─── Environment Variables ───
+.env
+
+# ─── IDE / Editor ───
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── Test Artifacts ───
+.pytest_cache/
+htmlcov/
+.coverage
+*.cover
+test_output.txt
+test_results.txt
+e2e_output.txt
+
+# ─── Runtime Generated (regenerated each pipeline run) ───
+database/compliance_rules.db
+data/chroma_db/
+data/processed/
+data/feedback/
+outputs/evaluations/
+outputs/violations/
+outputs/review/
+outputs/reports/
+outputs/audit/
+outputs/flags/
+outputs/extracted_rules.json
+
+# ─── Large Data Files (exceed GitHub 100MB limit) ───
+csv/*.csv
+
+# ─── Generated Test Files ───
+generate_test_pdf.py
+generate_industrial_violation_pdf.py
+data/company_data/ACME_Compliance_Report_2026.pdf
+data/company_data/Industrial_Compliance_Violations_Report.pdf
+
+# ─── OS Files ───
+.DS_Store
+Thumbs.db
+desktop.ini
