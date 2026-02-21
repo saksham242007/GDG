@@ -55,6 +55,13 @@ generate_industrial_violation_pdf.py
 data/company_data/ACME_Compliance_Report_2026.pdf
 data/company_data/Industrial_Compliance_Violations_Report.pdf
 
+# ─── Uploads & Recycle Bin (runtime temp) ───
+uploads/
+recyclebin/
+
+# ─── Company data CSVs (large / user-uploaded) ───
+data/company_data/*.csv
+
 # ─── OS Files ───
 .DS_Store
 Thumbs.db

@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compliance Shield — AI Compliance Monitoring</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine.js for reactivity -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    [x-cloak] { display: none !important; }
+    .glass { background: rgba(15,23,42,0.7); backdrop-filter: blur(16px); border: 1px solid rgba(99,102,241,0.08); }
+    .card { background: #0f172a; border: 1px solid rgba(148,163,184,0.08); }
+    .card:hover { border-color: rgba(99,102,241,0.2); }
+    .drop-active { border-color: #6366f1 !important; background: rgba(99,102,241,0.05) !important; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+    .fade-enter { animation: fadeIn .4s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { animation: spin .7s linear infinite; }
+    .progress-bar { transition: width .8s cubic-bezier(.4,0,.2,1); }
+    /* SVG Gauge */
+    .gauge-track { fill: none; stroke: rgba(255,255,255,0.04); stroke-width: 12; stroke-linecap: round; }
+    .gauge-fill { fill: none; stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(.4,0,.2,1), stroke 0.5s; }
+    /* Bar chart */
+    .bar-fill { transition: height 0.8s cubic-bezier(.4,0,.2,1); border-radius: 6px 6px 0 0; }
+    /* Donut */
+    .donut-track { fill: none; stroke: rgba(255,255,255,0.04); stroke-width: 10; }
+    .donut-segment { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(.4,0,.2,1); }
+  </style>
+</head>
+
+<body class="bg-[#030712] text-slate-300 min-h-screen" x-data="app()" x-init="init()">
+
+  <!-- NAV -->
+  <nav class="sticky top-0 z-50 glass border-b border-slate-800/60">
+    <div class="max-w-[1440px] mx-auto px-5 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+        </div>
+        <div>
+          <span class="text-sm font-bold text-white tracking-tight">Compliance Shield</span>
+          <span class="hidden sm:inline text-[10px] text-slate-500 ml-2 tracking-widest uppercase">AI Monitoring</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-1.5 text-xs">
+          <span class="relative flex h-2 w-2">
+            <span class="absolute inline-flex h-full w-full rounded-full opacity-75" :class="connected ? 'bg-emerald-400 animate-ping' : 'bg-red-400'"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2" :class="connected ? 'bg-emerald-500' : 'bg-red-500'"></span>
+          </span>
+          <span :class="connected ? 'text-slate-400' : 'text-red-400'" x-text="connected ? 'Live' : 'Offline'"></span>
+        </div>
+        <button @click="refresh()" class="p-1.5 rounded-md hover:bg-white/5 transition">
+          <svg class="w-4 h-4 text-slate-400" :class="loading && 'spinner'" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M2.985 14.652"/></svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="max-w-[1440px] mx-auto px-5 py-5">
+
+    <!-- TABS -->
+    <div class="flex gap-1 mb-5 bg-slate-900/50 rounded-xl p-1 w-fit">
+      <template x-for="t in tabs" :key="t.id">
+        <button @click="switchTab(t.id)"
+          class="px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200"
+          :class="tab === t.id ? 'bg-indigo-500/15 text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'">
+          <span x-text="t.label"></span>
+          <span x-show="t.id === 'reviews' && data.metrics?.pending_reviews > 0"
+                class="ml-1 px-1.5 py-0.5 text-[10px] rounded-full bg-amber-500/20 text-amber-400"
+                x-text="data.metrics?.pending_reviews"></span>
+        </button>
+      </template>
+    </div>
+
+    <!-- ═══ DASHBOARD TAB ═══ -->
+    <div x-show="tab === 'dashboard'" class="fade-enter space-y-5">
+
+      <!-- Metric Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <template x-for="m in metricCards" :key="m.key">
+          <div class="card rounded-xl p-4 transition-all duration-200">
+            <p class="text-[11px] uppercase tracking-wider mb-1.5 text-slate-500" x-text="m.label"></p>
+            <p class="text-2xl font-bold tabular-nums" :class="m.color || 'text-white'"
+               x-text="formatMetric(m.key)"></p>
+          </div>
+        </template>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        <!-- Compliance Gauge (Pure SVG) -->
+        <div class="card rounded-xl p-5">
+          <p class="text-xs font-semibold text-slate-400 mb-4">Compliance Score</p>
+          <div class="flex flex-col items-center justify-center" style="height:200px">
+            <svg viewBox="0 0 200 120" class="w-52">
+              <!-- Track -->
+              <path d="M 20 100 A 80 80 0 0 1 180 100" class="gauge-track" />
+              <!-- Filled arc -->
+              <path d="M 20 100 A 80 80 0 0 1 180 100" class="gauge-fill"
+                    :stroke="gaugeColor"
+                    :stroke-dasharray="gaugeArc"
+                    :stroke-dashoffset="gaugeDash" />
+              <!-- Value -->
+              <text x="100" y="88" text-anchor="middle" class="text-3xl font-bold" fill="currentColor"
+                    :fill="gaugeColor" style="font-size:32px;font-weight:800;font-family:Inter,sans-serif"
+                    x-text="complianceRate + '%'"></text>
+              <text x="100" y="108" text-anchor="middle" fill="#64748b" style="font-size:11px;font-family:Inter,sans-serif">Compliance</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Severity Breakdown (Pure CSS Bars) -->
+        <div class="card rounded-xl p-5">
+          <p class="text-xs font-semibold text-slate-400 mb-4">Severity Breakdown</p>
+          <div class="flex items-end justify-center gap-5" style="height:200px">
+            <template x-for="bar in severityBars" :key="bar.label">
+              <div class="flex flex-col items-center gap-2">
+                <!-- Value -->
+                <span class="text-xs font-bold tabular-nums" :style="`color:${bar.color}`" x-text="bar.value"></span>
+                <!-- Bar -->
+                <div class="w-10 bg-white/[0.03] rounded-t-lg" style="height:140px;position:relative">
+                  <div class="bar-fill absolute bottom-0 left-0 right-0"
+                       :style="`height:${bar.pct}%;background:${bar.color}`"></div>
+                </div>
+                <!-- Label -->
+                <span class="text-[11px] text-slate-500" x-text="bar.label"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Analysis Types (Pure SVG Donut) -->
+        <div class="card rounded-xl p-5">
+          <p class="text-xs font-semibold text-slate-400 mb-4">Analysis Types</p>
+          <div class="flex flex-col items-center justify-center" style="height:200px">
+            <svg viewBox="0 0 120 120" class="w-32 mb-4">
+              <circle cx="60" cy="60" r="50" class="donut-track" />
+              <!-- SQL segment -->
+              <circle cx="60" cy="60" r="50" class="donut-segment" stroke="#6366f1"
+                      :stroke-dasharray="sqlDonutDash" stroke-dashoffset="78.5"
+                      transform="rotate(-90 60 60)" />
+              <!-- RAG segment -->
+              <circle cx="60" cy="60" r="50" class="donut-segment" stroke="#a855f7"
+                      :stroke-dasharray="ragDonutDash"
+                      :stroke-dashoffset="ragDonutOffset"
+                      transform="rotate(-90 60 60)" />
+              <!-- Center text -->
+              <text x="60" y="58" text-anchor="middle" fill="white" style="font-size:18px;font-weight:700;font-family:Inter,sans-serif"
+                    x-text="totalAnalysed"></text>
+              <text x="60" y="72" text-anchor="middle" fill="#64748b" style="font-size:9px;font-family:Inter,sans-serif">total scans</text>
+            </svg>
+            <!-- Legend -->
+            <div class="flex items-center gap-5">
+              <div class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                <span class="text-xs text-slate-400">SQL (<span x-text="sqlCount"></span>)</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-violet-500"></span>
+                <span class="text-xs text-slate-400">RAG (<span x-text="ragCount"></span>)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Recent Scans + AI Insight -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Recent Scans -->
+        <div class="card rounded-xl p-5">
+          <p class="text-xs font-semibold text-slate-400 mb-4">Recent Scans</p>
+          <div class="space-y-1.5 max-h-[320px] overflow-y-auto">
+            <template x-if="!data.recent_activity?.length">
+              <p class="text-sm text-slate-600 text-center py-6">No scans yet. Upload a file to begin.</p>
+            </template>
+            <template x-for="item in (data.recent_activity || [])" :key="item.id">
+              <div class="flex items-center justify-between p-3 rounded-lg hover:bg-white/[0.03] transition cursor-pointer group"
+                   @click="switchTab('history')">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                       :class="item.compliant ? 'bg-emerald-500/10' : 'bg-red-500/10'">
+                    <svg x-show="item.compliant" class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                    <svg x-show="!item.compliant" class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z M12 15.75h.007v.008H12v-.008z"/></svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-slate-200 group-hover:text-white transition" x-text="item.id"></p>
+                    <p class="text-[11px] text-slate-500">
+                      <span x-text="item.type"></span> ·
+                      <span x-text="item.timestamp ? new Date(item.timestamp).toLocaleString() : ''"></span>
+                    </p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-mono font-semibold tabular-nums"
+                        :class="item.compliant ? 'text-emerald-400' : 'text-red-400'"
+                        x-text="Math.round(item.score ?? item.confidence * 100) + '%'"></span>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide"
+                        :class="item.compliant ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'"
+                        x-text="item.compliant ? 'Pass' : 'Fail'"></span>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- AI Insight -->
+        <div class="card rounded-xl p-5">
+          <p class="text-xs font-semibold text-slate-400 mb-4 flex items-center gap-2">
+            <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"/></svg>
+            Latest AI Insight
+          </p>
+          <template x-if="!data.latest_feedback">
+            <p class="text-sm text-slate-600 text-center py-6">No AI feedback yet.</p>
+          </template>
+          <template x-if="data.latest_feedback">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold px-3 py-1 rounded-lg"
+                        :class="data.latest_feedback.overall_assessment === 'COMPLIANT'
+                          ? 'bg-emerald-500/10 text-emerald-400'
+                          : 'bg-red-500/10 text-red-400'"
+                        x-text="data.latest_feedback.overall_assessment"></span>
+                  <span class="text-xs text-slate-500">
+                    Confidence: <span class="text-white font-semibold" x-text="Math.round((data.latest_feedback.llm_confidence || 0) * 100) + '%'"></span>
+                  </span>
+                </div>
+                <span class="text-[11px] text-slate-600 font-mono" x-text="data.latest_feedback.evaluation_id"></span>
+              </div>
+              <p class="text-sm text-slate-300 leading-relaxed" x-text="data.latest_feedback.risk_narrative"></p>
+              <template x-if="data.latest_feedback.violated_policies?.length">
+                <div>
+                  <p class="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Violated Policies</p>
+                  <div class="flex flex-wrap gap-1.5">
+                    <template x-for="(p, i) in data.latest_feedback.violated_policies" :key="i">
+                      <span class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/20" x-text="p"></span>
+                    </template>
+                  </div>
+                </div>
+              </template>
+              <template x-if="data.latest_feedback.key_findings?.length">
+                <div>
+                  <p class="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Key Findings</p>
+                  <template x-for="(f, i) in data.latest_feedback.key_findings" :key="i">
+                    <div class="flex items-start gap-2 mb-1.5">
+                      <svg class="w-3 h-3 mt-1 text-indigo-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+                      <span class="text-sm text-slate-300" x-text="f"></span>
+                    </div>
+                  </template>
+                </div>
+              </template>
+              <template x-if="data.latest_feedback.recommendations?.length">
+                <div>
+                  <p class="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Recommendations</p>
+                  <template x-for="(r, i) in data.latest_feedback.recommendations" :key="i">
+                    <div class="flex items-start gap-2 mb-1.5">
+                      <svg class="w-3 h-3 mt-1 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"/></svg>
+                      <span class="text-sm text-slate-300" x-text="r"></span>
+                    </div>
+                  </template>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ NEW SCAN TAB ═══ -->
+    <div x-show="tab === 'scan'" x-cloak class="fade-enter">
+      <div class="max-w-xl mx-auto">
+        <div class="card rounded-2xl p-8">
+          <div class="text-center mb-8">
+            <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+            </div>
+            <h2 class="text-lg font-bold text-white">Run Compliance Scan</h2>
+            <p class="text-sm text-slate-500 mt-1">Upload a CSV or PDF to analyze against policies</p>
+          </div>
+
+          <!-- Drop Zone -->
+          <div class="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200"
+               :class="dragging ? 'border-indigo-500 bg-indigo-500/5' : 'border-slate-700 hover:border-slate-500'"
+               @dragover.prevent="dragging = true" @dragleave.prevent="dragging = false"
+               @drop.prevent="dragging = false; handleDrop($event)"
+               @click="$refs.fileInput.click()">
+            <svg class="w-10 h-10 mx-auto mb-3" :class="dragging ? 'text-indigo-400' : 'text-slate-600'" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+            <p class="text-slate-400 text-sm">Drop file here or <span class="text-indigo-400 font-medium">browse</span></p>
+            <p class="text-xs text-slate-600 mt-1">CSV or PDF · Max 3 GB</p>
+            <input type="file" x-ref="fileInput" accept=".csv,.pdf" class="hidden" @change="handleFileSelect($event)" />
+          </div>
+
+          <!-- Selected File -->
+          <div x-show="scanFile" x-cloak class="mt-4 card rounded-lg p-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-white" x-text="scanFile?.name"></p>
+                <p class="text-xs text-slate-500" x-text="formatBytes(scanFile?.size || 0)"></p>
+              </div>
+            </div>
+            <button @click="scanFile = null" class="p-1 rounded hover:bg-white/5 text-slate-400 hover:text-red-400 transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Scan Button -->
+          <button @click="startScan()" :disabled="!scanFile || scanning"
+                  class="w-full mt-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 shadow-lg"
+                  :class="scanFile && !scanning
+                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-500 hover:to-violet-500 shadow-indigo-500/20'
+                    : 'bg-slate-800 text-slate-500 cursor-not-allowed shadow-none'">
+            <span x-show="!scanning">Start Compliance Scan</span>
+            <span x-show="scanning" class="flex items-center justify-center gap-2">
+              <svg class="w-4 h-4 spinner" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M2.985 14.652"/></svg>
+              Scanning...
+            </span>
+          </button>
+
+          <!-- Progress -->
+          <div x-show="scanning" x-cloak class="mt-5 space-y-3">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-400" x-text="scanStatus"></span>
+              <span class="text-slate-500 tabular-nums" x-text="scanProgress + '%'"></span>
+            </div>
+            <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-full rounded-full progress-bar"
+                   :class="scanError ? 'bg-red-500' : 'bg-gradient-to-r from-indigo-500 to-violet-500'"
+                   :style="`width: ${scanProgress}%`"></div>
+            </div>
+          </div>
+
+          <!-- Result -->
+          <div x-show="scanResult" x-cloak class="mt-5 card rounded-xl p-5 fade-enter">
+            <template x-if="scanResult">
+              <div>
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center"
+                         :class="scanResult.compliant ? 'bg-emerald-500/10' : 'bg-red-500/10'">
+                      <svg x-show="scanResult.compliant" class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      <svg x-show="!scanResult.compliant" class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+                    </div>
+                    <div>
+                      <p class="font-bold" :class="scanResult.compliant ? 'text-emerald-400' : 'text-red-400'"
+                         x-text="scanResult.compliant ? 'COMPLIANT' : 'NON-COMPLIANT'"></p>
+                      <p class="text-[11px] text-slate-500" x-text="(scanResult.evaluation_id || '') + ' · ' + (scanResult.analysis_type || '') + ' Analysis'"></p>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-2xl font-bold tabular-nums" :class="scanResult.compliant ? 'text-emerald-400' : 'text-red-400'"
+                       x-text="(scanResult.compliance_score ?? (scanResult.compliant ? 100 : 0)) + '%'"></p>
+                    <p class="text-[11px] text-slate-500">Confidence: <span x-text="Math.round((scanResult.confidence || 0) * 100) + '%'"></span></p>
+                  </div>
+                </div>
+                <template x-if="scanResult.violated_policies?.length > 0">
+                  <div class="border-t border-slate-800 pt-3">
+                    <p class="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Violated Policies</p>
+                    <div class="flex flex-wrap gap-1">
+                      <template x-for="(v, vi) in scanResult.violated_policies" :key="vi">
+                        <span class="px-2 py-0.5 rounded text-xs bg-red-500/10 text-red-300" x-text="v"></span>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ HISTORY TAB ═══ -->
+    <div x-show="tab === 'history'" x-cloak class="fade-enter">
+      <div class="card rounded-xl overflow-hidden">
+        <div class="p-4 border-b border-slate-800/60 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-400">Scan History</p>
+            <p class="text-[11px] text-slate-600" x-text="history.length + ' scans'"></p>
+          </div>
+          <div class="flex items-center gap-2">
+            <!-- Clear History (keeps violations/reviews) -->
+            <button @click="clearHistory()"
+                    class="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition font-medium">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+              Clear Logs
+            </button>
+            <!-- Delete All → Recycle Bin -->
+            <button @click="deleteAllHistory()"
+                    class="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition font-medium">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+              Delete All
+            </button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-[11px] text-slate-500 uppercase tracking-wider border-b border-slate-800/40">
+                <th class="px-4 py-3 text-left font-medium">Eval ID</th>
+                <th class="px-4 py-3 text-left font-medium">Type</th>
+                <th class="px-4 py-3 text-left font-medium">Status</th>
+                <th class="px-4 py-3 text-left font-medium">Score</th>
+                <th class="px-4 py-3 text-left font-medium">Confidence</th>
+                <th class="px-4 py-3 text-left font-medium">AI Assessment</th>
+                <th class="px-4 py-3 text-center font-medium">Violations</th>
+                <th class="px-4 py-3 text-left font-medium">Time</th>
+                <th class="px-4 py-3 text-center font-medium">Report</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/30">
+              <template x-if="history.length === 0">
+                <tr><td colspan="9" class="px-4 py-10 text-center text-slate-600">No scan history yet</td></tr>
+              </template>
+              <template x-for="h in history" :key="h.evaluation_id">
+                <tr class="hover:bg-white/[0.02] transition">
+                  <td class="px-4 py-3 font-mono text-xs text-indigo-400" x-text="h.evaluation_id"></td>
+                  <td class="px-4 py-3">
+                    <span class="text-xs px-2 py-0.5 rounded"
+                          :class="h.analysis_type==='SQL' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-violet-500/10 text-violet-400'"
+                          x-text="h.analysis_type"></span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase"
+                          :class="h.compliant ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'"
+                          x-text="h.compliant ? 'Pass' : 'Fail'"></span>
+                  </td>
+                  <td class="px-4 py-3 font-mono text-xs" x-text="h.compliance_score != null ? h.compliance_score + '%' : '—'"></td>
+                  <td class="px-4 py-3 font-mono text-xs tabular-nums" x-text="Math.round((h.confidence || 0) * 100) + '%'"></td>
+                  <td class="px-4 py-3">
+                    <span x-show="h.llm_assessment" class="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase"
+                          :class="h.llm_assessment === 'COMPLIANT' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'"
+                          x-text="h.llm_assessment"></span>
+                    <span x-show="!h.llm_assessment" class="text-slate-700">—</span>
+                  </td>
+                  <td class="px-4 py-3 text-center tabular-nums"
+                      :class="(h.violated_policies?.length || 0) > 0 ? 'text-red-400' : 'text-slate-600'"
+                      x-text="h.violated_policies?.length || 0"></td>
+                  <td class="px-4 py-3 text-xs text-slate-500" x-text="h.timestamp ? new Date(h.timestamp).toLocaleString() : ''"></td>
+                  <td class="px-4 py-3 text-center">
+                    <button @click="downloadInsightPdf(h.evaluation_id)"
+                            class="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-md bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition font-medium"
+                            title="Download AI Insight as PDF">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                      PDF
+                    </button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ VIOLATIONS TAB ═══ -->
+    <div x-show="tab === 'violations'" x-cloak class="fade-enter">
+      <div class="card rounded-xl overflow-hidden">
+        <div class="p-4 border-b border-slate-800/60">
+          <p class="text-xs font-semibold text-slate-400">Auto-Logged Violations</p>
+        </div>
+        <div class="p-4 space-y-3">
+          <template x-if="violations.length === 0">
+            <div class="text-center py-10">
+              <svg class="w-12 h-12 mx-auto text-emerald-800 mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <p class="text-slate-600">No violations detected</p>
+            </div>
+          </template>
+          <template x-for="v in violations" :key="v.record_id">
+            <div class="card rounded-xl p-4 hover:border-red-500/20 transition">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z M12 15.75h.007v.008H12v-.008z"/></svg>
+                  <span class="text-sm font-mono font-medium text-white" x-text="v.record_id"></span>
+                  <span class="text-xs px-2 py-0.5 rounded"
+                        :class="v.tier==='SQL' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-violet-500/10 text-violet-400'"
+                        x-text="v.tier || v.analysis_type || 'RAG'"></span>
+                </div>
+                <span class="text-sm font-mono tabular-nums"
+                      :class="(v.confidence || 0) >= 0.95 ? 'text-red-400' : 'text-amber-400'"
+                      x-text="Math.round((v.confidence || 0) * 100) + '% confidence'"></span>
+              </div>
+              <p class="text-sm text-slate-400 mb-3" x-text="((v.explanation || '') + '').substring(0, 300)"></p>
+              <div class="flex flex-wrap gap-1">
+                <template x-for="(r, ri) in (v.cited_rule_ids || [])" :key="ri">
+                  <span class="px-2 py-0.5 rounded text-xs bg-red-500/10 text-red-300" x-text="r"></span>
+                </template>
+              </div>
+              <p class="text-[11px] text-slate-600 mt-2" x-text="v.timestamp ? new Date(v.timestamp).toLocaleString() : ''"></p>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ REVIEWS TAB ═══ -->
+    <div x-show="tab === 'reviews'" x-cloak class="fade-enter">
+      <div class="card rounded-xl overflow-hidden">
+        <div class="p-4 border-b border-slate-800/60">
+          <p class="text-xs font-semibold text-slate-400">Human Review Queue</p>
+        </div>
+        <div class="p-4 space-y-3">
+          <template x-if="reviews.length === 0">
+            <div class="text-center py-10">
+              <svg class="w-12 h-12 mx-auto text-slate-800 mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 00-2.15-1.588H6.911a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661z"/></svg>
+              <p class="text-slate-600">Review queue is empty</p>
+            </div>
+          </template>
+          <template x-for="r in reviews" :key="r.record_id">
+            <div class="card rounded-xl p-4 hover:border-amber-500/20 transition">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  <span class="text-sm font-mono font-medium text-white" x-text="r.record_id"></span>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 font-semibold uppercase">Needs Review</span>
+                </div>
+                <span class="text-sm font-mono text-amber-400 tabular-nums" x-text="Math.round((r.confidence || 0) * 100) + '%'"></span>
+              </div>
+              <p class="text-sm text-slate-400 mb-4" x-text="((r.explanation || '') + '').substring(0, 250)"></p>
+              <div class="flex gap-2">
+                <button @click="submitReview(r.record_id, 'confirmed_violation')"
+                        class="px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-xs font-medium hover:bg-red-500/20 transition">
+                  Confirm Violation
+                </button>
+                <button @click="submitReview(r.record_id, 'false_positive')"
+                        class="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-medium hover:bg-emerald-500/20 transition">
+                  False Positive
+                </button>
+                <button @click="submitReview(r.record_id, 'needs_more_info')"
+                        class="px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 text-xs font-medium hover:bg-amber-500/20 transition">
+                  Need More Info
+                </button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ RULES TAB ═══ -->
+    <div x-show="tab === 'rules'" x-cloak class="fade-enter">
+      <div class="card rounded-xl overflow-hidden">
+        <div class="p-4 border-b border-slate-800/60 flex items-center justify-between">
+          <p class="text-xs font-semibold text-slate-400">Compliance Rules</p>
+          <p class="text-[11px] text-slate-600" x-text="rules.length + ' rules'"></p>
+        </div>
+        <div class="p-4 space-y-1.5 max-h-[600px] overflow-y-auto">
+          <template x-if="rules.length === 0">
+            <p class="text-sm text-slate-600 text-center py-10">No rules extracted yet. Run a scan to ingest policies.</p>
+          </template>
+          <template x-for="rule in rules" :key="rule.rule_id">
+            <div class="flex items-start gap-3 p-3 rounded-lg hover:bg-white/[0.02] transition">
+              <div class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-sm font-mono font-medium text-white" x-text="rule.rule_id"></span>
+                  <span class="text-[10px] px-2 py-0.5 rounded font-medium"
+                        :class="(rule.complexity || rule.rule_complexity) === 'complex'
+                          ? 'bg-violet-500/10 text-violet-400'
+                          : 'bg-indigo-500/10 text-indigo-400'"
+                        x-text="(rule.complexity || rule.rule_complexity) === 'complex' ? 'RAG' : 'SQL'"></span>
+                </div>
+                <p class="text-sm text-slate-300 mb-0.5" x-text="rule.description || ''"></p>
+                <p class="text-xs text-slate-600">
+                  <span class="text-slate-500">Condition:</span>
+                  <span x-text="rule.condition || '—'"></span>
+                </p>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ POLICIES TAB ═══ -->
+    <div x-show="tab === 'policies'" x-cloak class="fade-enter">
+      <div class="max-w-2xl mx-auto space-y-6">
+
+        <!-- Upload Section -->
+        <div class="card rounded-2xl p-8">
+          <div class="text-center mb-6">
+            <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+            </div>
+            <h2 class="text-lg font-bold text-white">Upload Policy PDFs</h2>
+            <p class="text-sm text-slate-500 mt-1">Upload one or more compliance policy PDFs. Phase 1 will auto re-run when policies change.</p>
+          </div>
+
+          <!-- Drop Zone -->
+          <div class="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200"
+               :class="policyDragging ? 'border-emerald-500 bg-emerald-500/5' : 'border-slate-700 hover:border-slate-500'"
+               @dragover.prevent="policyDragging = true" @dragleave.prevent="policyDragging = false"
+               @drop.prevent="handlePolicyDrop($event)"
+               @click="$refs.policyInput.click()">
+            <svg class="w-10 h-10 mx-auto mb-3" :class="policyDragging ? 'text-emerald-400' : 'text-slate-600'" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+            <p class="text-slate-400 text-sm">Drop PDF files here or <span class="text-emerald-400 font-medium">browse</span></p>
+            <p class="text-xs text-slate-600 mt-1">PDF files only · Multiple files supported</p>
+            <input type="file" x-ref="policyInput" accept=".pdf" multiple class="hidden" @change="handlePolicySelect($event)" />
+          </div>
+
+          <!-- Selected files queue -->
+          <template x-if="policyFiles.length > 0">
+            <div class="mt-4 space-y-2">
+              <p class="text-xs font-semibold text-slate-400 mb-2">Ready to upload (<span x-text="policyFiles.length"></span> files)</p>
+              <template x-for="(pf, pi) in policyFiles" :key="pi">
+                <div class="card rounded-lg p-3 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                      <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                    </div>
+                    <div>
+                      <p class="text-sm font-medium text-white" x-text="pf.name"></p>
+                      <p class="text-xs text-slate-500" x-text="formatBytes(pf.size)"></p>
+                    </div>
+                  </div>
+                  <button @click="removePolicyFile(pi)" class="p-1 rounded hover:bg-white/5 text-slate-400 hover:text-red-400 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+              </template>
+
+              <!-- Upload button -->
+              <button @click="uploadPolicies()" :disabled="policyUploading"
+                      class="w-full mt-3 py-3 rounded-xl text-sm font-semibold transition-all duration-200 shadow-lg"
+                      :class="!policyUploading
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/20'
+                        : 'bg-slate-800 text-slate-500 cursor-not-allowed shadow-none'">
+                <span x-show="!policyUploading">Upload <span x-text="policyFiles.length"></span> Policy PDF(s)</span>
+                <span x-show="policyUploading" class="flex items-center justify-center gap-2">
+                  <svg class="w-4 h-4 spinner" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M2.985 14.652"/></svg>
+                  Uploading...
+                </span>
+              </button>
+            </div>
+          </template>
+        </div>
+
+        <!-- Current Policies List -->
+        <div class="card rounded-xl overflow-hidden">
+          <div class="p-4 border-b border-slate-800/60 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <p class="text-xs font-semibold text-slate-400">Current Policy PDFs</p>
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                    :class="policies.length > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'"
+                    x-text="policies.length + ' loaded'"></span>
+            </div>
+            <button x-show="policies.length > 0" @click="deleteAllPolicies()"
+                    class="text-[11px] px-3 py-1 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition font-medium">
+              Delete All
+            </button>
+          </div>
+
+          <div class="p-4 space-y-1.5 max-h-[500px] overflow-y-auto">
+            <template x-if="policies.length === 0">
+              <div class="text-center py-10">
+                <svg class="w-12 h-12 mx-auto mb-3 text-slate-700" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                <p class="text-sm text-red-400 font-medium">No policy PDFs uploaded</p>
+                <p class="text-xs text-slate-600 mt-1">Upload at least one policy PDF to enable compliance scanning.</p>
+              </div>
+            </template>
+            <template x-for="policy in policies" :key="policy.filename">
+              <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.02] transition group">
+                <div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-white truncate" x-text="policy.filename"></p>
+                  <p class="text-xs text-slate-500">
+                    <span x-text="formatBytes(policy.size)"></span>
+                    <span class="mx-1">·</span>
+                    <span x-text="new Date(policy.uploaded_at).toLocaleDateString() + ' ' + new Date(policy.uploaded_at).toLocaleTimeString()"></span>
+                  </p>
+                </div>
+                <button @click="deletePolicy(policy.filename)"
+                        class="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-all">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                </button>
+              </div>
+            </template>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-800/40 mt-10 py-4">
+    <div class="max-w-[1440px] mx-auto px-5 flex items-center justify-between text-[11px] text-slate-700">
+      <span>Compliance Shield v2.0</span>
+      <span>Powered by LangChain · LangGraph · GPT-4o</span>
+    </div>
+  </footer>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<script>
+function app() {
+  return {
+    // State
+    tab: 'dashboard',
+    tabs: [
+      { id: 'dashboard', label: 'Dashboard' },
+      { id: 'scan',      label: 'New Scan' },
+      { id: 'history',   label: 'History' },
+      { id: 'violations',label: 'Violations' },
+      { id: 'reviews',   label: 'Reviews' },
+      { id: 'rules',     label: 'Rules' },
+      { id: 'policies',  label: 'Policies' },
+    ],
+    data: {},
+    history: [],
+    violations: [],
+    reviews: [],
+    rules: [],
+    policies: [],
+    policyFiles: [],
+    policyUploading: false,
+    policyDragging: false,
+    connected: false,
+    loading: false,
+
+    // Scan state
+    scanFile: null,
+    scanning: false,
+    scanProgress: 0,
+    scanStatus: '',
+    scanResult: null,
+    scanError: false,
+    dragging: false,
+
+    _refreshTimer: null,
+
+    // Chart data (updated in refresh)
+    complianceRate: 0,
+    gaugeColor: '#f87171',
+    gaugeDash: 251.2,
+    severityBars: [
+      { label: 'Critical', value: 0, color: '#ef4444', pct: 0 },
+      { label: 'High',     value: 0, color: '#f97316', pct: 0 },
+      { label: 'Medium',   value: 0, color: '#eab308', pct: 0 },
+      { label: 'Low',      value: 0, color: '#22c55e', pct: 0 },
+    ],
+    sqlCount: 0,
+    ragCount: 0,
+    totalAnalysed: 0,
+    sqlDonutDash: '0 314.16',
+    ragDonutDash: '0 314.16',
+    ragDonutOffset: 78.5,
+
+    metricCards: [
+      { key: 'total_scans',     label: 'Total Scans',     color: 'text-white' },
+      { key: 'compliant',       label: 'Compliant',       color: 'text-emerald-400' },
+      { key: 'non_compliant',   label: 'Non-Compliant',   color: 'text-red-400' },
+      { key: 'compliance_rate', label: 'Rate',             color: 'text-white' },
+      { key: 'pending_reviews', label: 'Pending Reviews',  color: 'text-amber-400' },
+      { key: 'total_rules',    label: 'Active Rules',     color: 'text-violet-400' },
+    ],
+
+    // ── Lifecycle ──
+    async init() {
+      await this.refresh();
+      this._refreshTimer = setInterval(() => {
+        if (this.tab === 'dashboard') this.refresh();
+      }, 15000);
+    },
+
+    // ── Tab switching — loads data for the target tab ──
+    switchTab(id) {
+      this.tab = id;
+      if (id === 'history')    this.loadHistory();
+      if (id === 'violations') this.loadViolations();
+      if (id === 'reviews')    this.loadReviews();
+      if (id === 'rules')      this.loadRules();
+      if (id === 'policies')   this.loadPolicies();
+      if (id === 'dashboard')  this.refresh();
+    },
+
+    formatMetric(key) {
+      const val = this.data.metrics?.[key];
+      if (val == null) return '—';
+      if (key === 'compliance_rate') return val + '%';
+      return val;
+    },
+
+    // ── API helper ──
+    async api(path) {
+      try {
+        const res = await fetch(path);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      } catch (e) {
+        console.warn('API error', path, e);
+        throw e;
+      }
+    },
+
+    // ── Recompute chart data from API response ──
+    updateChartData() {
+      const m = this.data.metrics || {};
+      // Gauge
+      this.complianceRate = Math.round(m.compliance_rate ?? 0);
+      this.gaugeColor = this.complianceRate >= 80 ? '#4ade80' : this.complianceRate >= 50 ? '#facc15' : '#f87171';
+      this.gaugeDash = 251.2 - (251.2 * this.complianceRate / 100);
+
+      // Severity bars
+      const s = this.data.severity || {};
+      const vals = [s.critical||0, s.high||0, s.medium||0, s.low||0];
+      const maxVal = Math.max(...vals, 1);
+      this.severityBars = [
+        { label: 'Critical', value: vals[0], color: '#ef4444', pct: (vals[0]/maxVal)*100 },
+        { label: 'High',     value: vals[1], color: '#f97316', pct: (vals[1]/maxVal)*100 },
+        { label: 'Medium',   value: vals[2], color: '#eab308', pct: (vals[2]/maxVal)*100 },
+        { label: 'Low',      value: vals[3], color: '#22c55e', pct: (vals[3]/maxVal)*100 },
+      ];
+
+      // Donut
+      const recent = this.data.recent_activity || [];
+      this.sqlCount = recent.filter(r => r.type === 'SQL').length;
+      this.ragCount = recent.filter(r => r.type === 'RAG').length;
+      this.totalAnalysed = recent.length;
+      const total = this.totalAnalysed || 1;
+      this.sqlDonutDash = (this.sqlCount / total * 314.16) + ' 314.16';
+      this.ragDonutDash = (this.ragCount / total * 314.16) + ' 314.16';
+      this.ragDonutOffset = 78.5 - (this.sqlCount / total * 314.16);
+    },
+
+    // ── Dashboard refresh ──
+    async refresh() {
+      this.loading = true;
+      try {
+        this.data = await this.api('/api/dashboard');
+        this.connected = true;
+        this.updateChartData();
+      } catch (e) {
+        this.connected = false;
+      }
+      this.loading = false;
+    },
+
+    // ── Tab data loaders ──
+    async loadHistory() {
+      try { this.history = await this.api('/api/history'); } catch(e) { this.history = []; }
+    },
+    async loadViolations() {
+      try { this.violations = await this.api('/api/violations'); } catch(e) { this.violations = []; }
+    },
+    async loadReviews() {
+      try { this.reviews = await this.api('/api/reviews'); } catch(e) { this.reviews = []; }
+    },
+    async loadRules() {
+      try { this.rules = await this.api('/api/rules'); } catch(e) { this.rules = []; }
+    },
+
+    // ── Policy management ──
+    async loadPolicies() {
+      try { this.policies = await this.api('/api/policies'); } catch(e) { this.policies = []; }
+    },
+
+    handlePolicyDrop(e) {
+      this.policyDragging = false;
+      const files = Array.from(e.dataTransfer?.files || []);
+      const pdfs = files.filter(f => f.name.toLowerCase().endsWith('.pdf'));
+      if (pdfs.length === 0) { alert('Only PDF files are allowed.'); return; }
+      this.policyFiles = [...this.policyFiles, ...pdfs];
+    },
+
+    handlePolicySelect(e) {
+      const files = Array.from(e.target?.files || []);
+      const pdfs = files.filter(f => f.name.toLowerCase().endsWith('.pdf'));
+      if (pdfs.length === 0) return;
+      this.policyFiles = [...this.policyFiles, ...pdfs];
+      e.target.value = '';
+    },
+
+    removePolicyFile(index) {
+      this.policyFiles = this.policyFiles.filter((_, i) => i !== index);
+    },
+
+    async uploadPolicies() {
+      if (this.policyFiles.length === 0 || this.policyUploading) return;
+      this.policyUploading = true;
+      try {
+        const formData = new FormData();
+        this.policyFiles.forEach(f => formData.append('files', f));
+        const res = await fetch('/api/policies/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Upload failed');
+        this.policyFiles = [];
+        await this.loadPolicies();
+        alert(`Successfully uploaded ${data.count} policy PDF(s). Phase 1 will re-run on next scan.`);
+      } catch(e) { alert('Upload error: ' + e.message); }
+      this.policyUploading = false;
+    },
+
+    async deletePolicy(filename) {
+      if (!confirm(`Delete policy "${filename}"? This cannot be undone.`)) return;
+      try {
+        const res = await fetch('/api/policies/' + encodeURIComponent(filename), { method: 'DELETE' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Delete failed');
+        await this.loadPolicies();
+      } catch(e) { alert('Delete error: ' + e.message); }
+    },
+
+    async deleteAllPolicies() {
+      if (!confirm('Delete ALL policy PDFs? Scans will not work until new policies are uploaded.')) return;
+      try {
+        const res = await fetch('/api/policies', { method: 'DELETE' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Delete failed');
+        await this.loadPolicies();
+        alert(`Deleted ${data.count} policy PDF(s).`);
+      } catch(e) { alert('Delete error: ' + e.message); }
+    },
+
+    // ── History management ──
+    async clearHistory() {
+      if (!confirm('Clear scan logs? This moves evaluation files to the recycle bin.\nViolations and reviews are preserved.')) return;
+      try {
+        const res = await fetch('/api/history/clear', { method: 'POST' });
+        const data = await res.json();
+        this.history = [];
+        this.refresh();
+        alert(`Cleared! ${data.moved_files} files moved to recycle bin.`);
+      } catch(e) { alert('Error clearing history: ' + e.message); }
+    },
+
+    async deleteAllHistory() {
+      if (!confirm('DELETE ALL data? This moves everything (evaluations, violations, reviews, reports) to the recycle bin.\n\nAll files are preserved in recyclebin/ for recovery.')) return;
+      try {
+        const res = await fetch('/api/history/delete-all', { method: 'DELETE' });
+        const data = await res.json();
+        this.history = [];
+        this.violations = [];
+        this.reviews = [];
+        this.refresh();
+        alert(`Deleted all! ${data.moved_files} files moved to recycle bin.`);
+      } catch(e) { alert('Error deleting: ' + e.message); }
+    },
+
+    downloadInsightPdf(evalId) {
+      const a = document.createElement('a');
+      a.href = '/api/history/' + evalId + '/pdf';
+      a.download = 'AI_Insight_' + evalId + '.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    },
+
+    // ── Review actions ──
+    async submitReview(recordId, decision) {
+      try {
+        await fetch('/api/review/decide', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ record_id: recordId, decision, reviewer: 'dashboard_user' })
+        });
+        await this.loadReviews();
+        this.refresh();
+      } catch(e) { console.error('Review submit error:', e); }
+    },
+
+    // ── File upload ──
+    handleDrop(e) {
+      const f = e.dataTransfer?.files?.[0];
+      if (f) this.selectFile(f);
+    },
+    handleFileSelect(e) {
+      const f = e.target?.files?.[0];
+      if (f) this.selectFile(f);
+    },
+    selectFile(file) {
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      if (!['csv', 'pdf'].includes(ext)) {
+        alert('Please upload a CSV or PDF file.');
+        return;
+      }
+      this.scanFile = file;
+      this.scanResult = null;
+      this.scanError = false;
+    },
+    formatBytes(bytes) {
+      if (!bytes) return '0 B';
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
+      return (bytes / 1073741824).toFixed(1) + ' GB';
+    },
+
+    // ── Start scan ──
+    async startScan() {
+      if (!this.scanFile || this.scanning) return;
+
+      this.scanning = true;
+      this.scanProgress = 0;
+      this.scanResult = null;
+      this.scanError = false;
+      this.scanStatus = 'Uploading file...';
+
+      const formData = new FormData();
+      formData.append('file', this.scanFile);
+
+      try {
+        this.scanProgress = 10;
+        const res = await fetch('/api/scan', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Upload failed');
+
+        const scanId = data.scan_id;
+        this.scanStatus = 'Running compliance pipeline...';
+        this.scanProgress = 25;
+
+        // Poll for status
+        let attempts = 0;
+        const poll = setInterval(async () => {
+          attempts++;
+          this.scanProgress = Math.min(25 + (attempts * 0.5), 92);
+
+          try {
+            const sr = await fetch('/api/scans/' + scanId);
+            const status = await sr.json();
+
+            if (status.status === 'completed') {
+              clearInterval(poll);
+              this.scanProgress = 100;
+              this.scanStatus = 'Complete!';
+              this.scanResult = status.result;
+              this.scanning = false;
+              this.refresh();
+            } else if (status.status === 'failed') {
+              clearInterval(poll);
+              this.scanProgress = 100;
+              this.scanStatus = 'Failed: ' + (status.error || 'Unknown error');
+              this.scanError = true;
+              this.scanning = false;
+            }
+          } catch(e) { /* keep polling */ }
+
+          if (attempts >= 180) {
+            clearInterval(poll);
+            this.scanStatus = 'Timeout — check history for results.';
+            this.scanning = false;
+          }
+        }, 2000);
+
+      } catch (err) {
+        this.scanStatus = 'Error: ' + err.message;
+        this.scanError = true;
+        this.scanning = false;
+      }
+    },
+  };
+}
+</script>
+</body>
+</html>

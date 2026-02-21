@@ -20,6 +20,7 @@ Usage:
 import sys
 import json
 import uuid
+import hashlib
 from datetime import datetime
 from pathlib import Path
 
@@ -54,6 +55,34 @@ LLM_FEEDBACK_LOG   = REPORTS_DIR   / "llm_feedback_log.json"
 EXTRACTED_JSON     = PROCESSED_DIR / "extracted_rules.json"
 
 
+POLICY_HASH_FILE   = PROCESSED_DIR / ".policy_hash"
+
+
+def _compute_policies_hash(policies_dir: Path) -> str:
+    """Compute a SHA-256 hash of all policy PDF files (name + size + mtime)."""
+    h = hashlib.sha256()
+    if policies_dir.exists():
+        for pdf in sorted(policies_dir.glob("*.pdf")):
+            stat = pdf.stat()
+            h.update(f"{pdf.name}|{stat.st_size}|{stat.st_mtime_ns}".encode())
+    return h.hexdigest()
+
+
+def _policies_changed() -> bool:
+    """Check if policy PDFs have changed since last ingestion."""
+    current_hash = _compute_policies_hash(POLICIES_DIR)
+    if not POLICY_HASH_FILE.exists():
+        return True
+    stored_hash = POLICY_HASH_FILE.read_text(encoding="utf-8").strip()
+    return current_hash != stored_hash
+
+
+def _save_policy_hash():
+    """Save current policy hash after successful ingestion."""
+    current_hash = _compute_policies_hash(POLICIES_DIR)
+    POLICY_HASH_FILE.write_text(current_hash, encoding="utf-8")
+
+
 def ensure_dirs():
     for d in [PROCESSED_DIR, CHROMA_DIR, FEEDBACK_DIR, SQL_DB_PATH.parent,
               EVALUATIONS_DIR, VIOLATIONS_DIR, REVIEW_DIR, REPORTS_DIR,
@@ -64,14 +93,27 @@ def ensure_dirs():
 # ═══════════════════════════════════════════════════════════════════════════════
 #  PHASE 1 — POLICY INGESTION
 # ═══════════════════════════════════════════════════════════════════════════════
-def phase1_policy_ingestion() -> bool:
+def phase1_policy_ingestion(force: bool = False) -> bool:
     """
     Phase 1: PDF → Parse → LLM Extract → Validate → Classify
              → SQL DB (simple) + ChromaDB (complex)
+    
+    Skips re-ingestion if policy PDFs haven't changed (hash-based cache).
+    Pass force=True to re-ingest regardless.
     """
     logger.info("=" * 70)
     logger.info("PHASE 1: POLICY INGESTION")
     logger.info("=" * 70)
+
+    # ── Cache check: skip if policies haven't changed ─────────────────────────
+    if not force and not _policies_changed():
+        if EXTRACTED_JSON.exists() and SQL_DB_PATH.exists():
+            logger.info("⚡ Policy PDFs unchanged — skipping re-ingestion (using cached rules)")
+            logger.info("  To force re-ingestion, delete %s or change policy PDFs", POLICY_HASH_FILE)
+            logger.info("✓ PHASE 1 SKIPPED — using cached rules")
+            return True
+
+    logger.info("Policy PDFs changed or no cache found — running full ingestion...")
 
     from src.services.pdf_loader import load_and_split_pdf, load_policy_pdfs, split_documents
     from src.services.rule_extractor import extract_rules_from_chunks
@@ -176,6 +218,9 @@ def phase1_policy_ingestion() -> bool:
     with EXTRACTED_JSON.open("w", encoding="utf-8") as f:
         json.dump(rules_payload, f, indent=2)
     logger.info("Saved rules JSON → %s", EXTRACTED_JSON)
+
+    # Save policy hash so we can skip next time if unchanged
+    _save_policy_hash()
 
     logger.info("✓ PHASE 1 COMPLETE — %d rules ingested", len(approved_rules))
     return True
