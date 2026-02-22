@@ -735,7 +735,10 @@ def _run_pipeline(scan_id: str, file_path: str):
         _active_scans[scan_id].status = "running"
 
         # Import pipeline functions
-        from run_full_pipeline import phase1_policy_ingestion, phase2_violation_detection, phase3_review_and_reporting
+        from run_full_pipeline import ensure_dirs, phase1_policy_ingestion, phase2_violation_detection, phase3_review_and_reporting
+
+        # Ensure all required directories exist
+        ensure_dirs()
 
         # Phase 1
         phase1_policy_ingestion()

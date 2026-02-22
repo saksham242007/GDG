@@ -4,729 +4,1139 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Compliance Shield — AI Compliance Monitoring</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
-
-  <!-- Tailwind CSS -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F6E1;&#xFE0F;</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Alpine.js for reactivity -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-        }
-      }
-    }
-  </script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
 
   <style>
-    body { font-family: 'Inter', system-ui, sans-serif; }
+    :root {
+      --ink: #0D0F14;
+      --surface: #F5F3EE;
+      --card: #FFFFFF;
+      --panel: #F0EDE6;
+      --navy: #1A2744;
+      --navy-mid: #263659;
+      --teal: #0E7C7B;
+      --teal-light: #15A8A6;
+      --amber: #D97706;
+      --amber-light: #FBB813;
+      --rose: #C0392B;
+      --rose-light: #E74C3C;
+      --sage: #2D6A4F;
+      --sage-light: #40916C;
+      --critical: #C0392B;
+      --high: #D97706;
+      --border: #E8E3DC;
+      --border-light: #F0EDE6;
+      --text-body: #3A3F4A;
+      --text-muted: #888;
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body: 'Sora', sans-serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+      --sidebar-w: 220px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
     [x-cloak] { display: none !important; }
-    .glass { background: rgba(15,23,42,0.7); backdrop-filter: blur(16px); border: 1px solid rgba(99,102,241,0.08); }
-    .card { background: #0f172a; border: 1px solid rgba(148,163,184,0.08); }
-    .card:hover { border-color: rgba(99,102,241,0.2); }
-    .drop-active { border-color: #6366f1 !important; background: rgba(99,102,241,0.05) !important; }
+
+    /* ===================== LAYOUT ===================== */
+    .app-shell { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: var(--sidebar-w);
+      background: #0D1824;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 40;
+      overflow-y: auto;
+    }
+
+    .main-area {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+
+    .page-content {
+      padding: 2rem;
+      flex: 1;
+    }
+
+    /* ===================== SIDEBAR ===================== */
+    .sidebar-logo {
+      padding: 1.5rem 1.25rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .sidebar-logo-icon {
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, var(--teal), var(--teal-light));
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(14,124,123,0.35);
+    }
+    .sidebar-logo-text {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      color: white;
+    }
+    .sidebar-logo-text em { font-style: italic; color: var(--teal-light); }
+
+    .nav-section-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.25);
+      padding: 1.25rem 1.25rem 0.4rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.55rem 1rem;
+      margin: 1px 0.5rem;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.5);
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+      background: transparent;
+      width: calc(100% - 1rem);
+      text-align: left;
+      position: relative;
+    }
+    .nav-item:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.05); }
+    .nav-item.active {
+      color: var(--teal-light);
+      background: rgba(14,124,123,0.18);
+    }
+    .nav-item .nav-badge {
+      margin-left: auto;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      background: rgba(217,119,6,0.25);
+      color: var(--amber-light);
+      border: 1px solid rgba(217,119,6,0.3);
+      border-radius: 10px;
+      padding: 0.1rem 0.45rem;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 1.25rem;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+    .conn-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      display: inline-block; margin-right: 6px;
+      flex-shrink: 0;
+    }
+    .conn-live { background: var(--sage-light); box-shadow: 0 0 6px rgba(64,145,108,0.7); }
+    .conn-off  { background: var(--rose); }
+
+    /* ===================== TOPBAR ===================== */
+    .page-title {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      color: var(--navy);
+      line-height: 1.2;
+    }
+    .topbar-right { display: flex; align-items: center; gap: 0.75rem; }
+    .topbar-meta {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .icon-btn {
+      width: 34px; height: 34px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border);
+      background: var(--card);
+      cursor: pointer;
+      color: #777;
+      transition: all 0.15s;
+    }
+    .icon-btn:hover { border-color: var(--teal); color: var(--teal); background: rgba(14,124,123,0.04); }
+
+    /* ===================== CARDS ===================== */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .card-header {
+      padding: 1rem 1.25rem 0.75rem;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-title {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .card-title-icon { color: var(--teal); }
+
+    /* ===================== KPI CARDS ===================== */
+    .kpi-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.1rem 1.25rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--border-light);
+    }
+    .kpi-card.kpi-good::before  { background: linear-gradient(90deg, var(--sage), var(--sage-light)); }
+    .kpi-card.kpi-bad::before   { background: linear-gradient(90deg, var(--rose), var(--rose-light)); }
+    .kpi-card.kpi-warn::before  { background: linear-gradient(90deg, var(--amber), var(--amber-light)); }
+    .kpi-card.kpi-teal::before  { background: linear-gradient(90deg, var(--teal), var(--teal-light)); }
+    .kpi-card.kpi-navy::before  { background: linear-gradient(90deg, var(--navy), var(--navy-mid)); }
+
+    .kpi-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+    .kpi-value {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      line-height: 1;
+      color: var(--navy);
+    }
+    .kpi-value.val-good  { color: var(--sage); }
+    .kpi-value.val-bad   { color: var(--rose); }
+    .kpi-value.val-warn  { color: var(--amber); }
+    .kpi-value.val-teal  { color: var(--teal); }
+
+    /* ===================== BADGES ===================== */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.18rem 0.55rem;
+      border-radius: 20px;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+    .badge-pass     { background: #DCFCE7; color: var(--sage); border: 1px solid #BBF7D0; }
+    .badge-fail     { background: #FEE2E2; color: var(--critical); border: 1px solid #FECACA; }
+    .badge-review   { background: #FEF9C3; color: #92400E; border: 1px solid #FDE68A; }
+    .badge-sql      { background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; }
+    .badge-rag      { background: #F3F4F6; color: #374151; border: 1px solid #E5E7EB; }
+    .badge-critical { background: #FEE2E2; color: var(--critical); border: 1px solid #FECACA; }
+    .badge-high     { background: #FEF3C7; color: var(--amber); border: 1px solid #FDE68A; }
+    .badge-medium   { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
+
+    /* ===================== BUTTONS ===================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1.1rem;
+      border-radius: 6px;
+      font-family: var(--font-body);
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+      text-decoration: none;
+    }
+    .btn-navy    { background: var(--navy); color: white; }
+    .btn-navy:hover { background: var(--navy-mid); }
+    .btn-teal    { background: var(--teal); color: white; }
+    .btn-teal:hover { background: var(--teal-light); }
+    .btn-ghost   { background: transparent; color: var(--navy); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--teal); color: var(--teal); background: rgba(14,124,123,0.03); }
+    .btn-danger  { background: var(--rose); color: white; }
+    .btn-danger:hover { background: var(--rose-light); }
+    .btn-amber   { background: var(--amber); color: white; }
+    .btn-amber:hover { opacity: 0.9; }
+    .btn-sage    { background: var(--sage); color: white; }
+    .btn-sage:hover { background: var(--sage-light); }
+    .btn-sm { padding: 0.35rem 0.75rem; font-size: 11.5px; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ===================== PROGRESS BAR ===================== */
+    .prog-track {
+      height: 6px;
+      background: var(--border-light);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .prog-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.8s cubic-bezier(.4,0,.2,1);
+    }
+    .prog-teal   { background: var(--teal); }
+    .prog-rose   { background: var(--rose); }
+    .prog-amber  { background: var(--amber); }
+    .prog-sage   { background: var(--sage); }
+    .prog-navy   { background: var(--navy); }
+    .prog-gradient { background: linear-gradient(90deg, var(--teal), var(--teal-light)); }
+
+    /* ===================== GAUGE ===================== */
+    .gauge-track { fill: none; stroke: #EEE9E1; stroke-width: 10; stroke-linecap: round; }
+    .gauge-fill  { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(.4,0,.2,1), stroke 0.5s; }
+
+    /* ===================== CHARTS ===================== */
+    .bar-fill { transition: height 0.8s cubic-bezier(.4,0,.2,1); border-radius: 3px 3px 0 0; }
+    .donut-track   { fill: none; stroke: #EEE9E1; stroke-width: 9; }
+    .donut-segment { fill: none; stroke-width: 9; stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(.4,0,.2,1); }
+
+    /* ===================== TABLE ===================== */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .data-table th {
+      text-align: left;
+      padding: 0.65rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+    }
+    .data-table th:first-child { border-radius: 0; }
+    .data-table td {
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--border-light);
+      color: var(--text-body);
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #FAFAF7; }
+    .td-mono { font-family: var(--font-mono); font-size: 11px; color: var(--navy); }
+
+    /* ===================== HIGHLIGHT BOX ===================== */
+    .highlight-box {
+      border-left: 3px solid var(--teal);
+      background: rgba(14,124,123,0.04);
+      padding: 0.9rem 1.1rem;
+      border-radius: 0 8px 8px 0;
+    }
+    .highlight-box.rose { border-color: var(--rose); background: #FEF2F2; }
+    .highlight-box.amber { border-color: var(--amber); background: #FFFBEB; }
+
+    /* ===================== DROP ZONE ===================== */
+    .drop-zone {
+      border: 1.5px dashed #D5D0C8;
+      border-radius: 12px;
+      background: #FAFAF7;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .drop-zone:hover { border-color: var(--teal); background: rgba(14,124,123,0.03); }
+    .drop-zone.drop-active { border-color: var(--teal); background: rgba(14,124,123,0.05); }
+
+    /* ===================== ALERTS ===================== */
+    .alert-strip {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.7rem;
+      padding: 0.8rem 1rem;
+      border-radius: 8px;
+      font-size: 12.5px;
+      border: 1px solid;
+    }
+    .alert-critical { background: #FEF2F2; border-color: #FECACA; color: #7F1D1D; }
+    .alert-amber    { background: #FFFBEB; border-color: #FDE68A; color: #78350F; }
+    .alert-teal     { background: #F0FDFA; border-color: #99F6E4; color: #134E4A; }
+
+    /* ===================== VIOLATION/REVIEW CARDS ===================== */
+    .violation-card { border-left: 3px solid var(--rose); }
+    .review-card    { border-left: 3px solid var(--amber); }
+    .result-pass    { border-left: 3px solid var(--sage); }
+    .result-fail    { border-left: 3px solid var(--rose); }
+
+    /* ===================== SCROLLBAR ===================== */
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
-    .fade-enter { animation: fadeIn .4s ease; }
+    ::-webkit-scrollbar-thumb { background: #D5D0C8; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #C0B9B0; }
+
+    /* ===================== ANIMATIONS ===================== */
+    .fade-enter { animation: fadeIn .3s cubic-bezier(.16,1,.3,1) both; }
     @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
     @keyframes spin { to { transform: rotate(360deg); } }
     .spinner { animation: spin .7s linear infinite; }
-    .progress-bar { transition: width .8s cubic-bezier(.4,0,.2,1); }
-    /* SVG Gauge */
-    .gauge-track { fill: none; stroke: rgba(255,255,255,0.04); stroke-width: 12; stroke-linecap: round; }
-    .gauge-fill { fill: none; stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(.4,0,.2,1), stroke 0.5s; }
-    /* Bar chart */
-    .bar-fill { transition: height 0.8s cubic-bezier(.4,0,.2,1); border-radius: 6px 6px 0 0; }
-    /* Donut */
-    .donut-track { fill: none; stroke: rgba(255,255,255,0.04); stroke-width: 10; }
-    .donut-segment { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(.4,0,.2,1); }
+    @keyframes ping { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .animate-ping { animation: ping 1.5s ease-in-out infinite; }
+
+    /* ===================== SECTION LABEL ===================== */
+    .section-label-sm {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--teal);
+    }
+
+    /* ===================== STATUS PILLS ===================== */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .pill-live     { background: #DCFCE7; color: #166534; }
+    .pill-offline  { background: #FEE2E2; color: #991B1B; }
+    .pill-live::before, .pill-offline::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .main-area { margin-left: 0; }
+      .page-content { padding: 1rem; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    }
   </style>
 </head>
 
-<body class="bg-[#030712] text-slate-300 min-h-screen" x-data="app()" x-init="init()">
+<body x-data="app()" x-init="init()">
+<div class="app-shell">
 
-  <!-- NAV -->
-  <nav class="sticky top-0 z-50 glass border-b border-slate-800/60">
-    <div class="max-w-[1440px] mx-auto px-5 h-14 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
-        </div>
-        <div>
-          <span class="text-sm font-bold text-white tracking-tight">Compliance Shield</span>
-          <span class="hidden sm:inline text-[10px] text-slate-500 ml-2 tracking-widest uppercase">AI Monitoring</span>
-        </div>
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar">
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">
+        <svg width="16" height="16" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
+        </svg>
       </div>
-      <div class="flex items-center gap-3">
-        <div class="flex items-center gap-1.5 text-xs">
-          <span class="relative flex h-2 w-2">
-            <span class="absolute inline-flex h-full w-full rounded-full opacity-75" :class="connected ? 'bg-emerald-400 animate-ping' : 'bg-red-400'"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2" :class="connected ? 'bg-emerald-500' : 'bg-red-500'"></span>
-          </span>
-          <span :class="connected ? 'text-slate-400' : 'text-red-400'" x-text="connected ? 'Live' : 'Offline'"></span>
-        </div>
-        <button @click="refresh()" class="p-1.5 rounded-md hover:bg-white/5 transition">
-          <svg class="w-4 h-4 text-slate-400" :class="loading && 'spinner'" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M2.985 14.652"/></svg>
-        </button>
-      </div>
-    </div>
-  </nav>
-
-  <!-- MAIN -->
-  <div class="max-w-[1440px] mx-auto px-5 py-5">
-
-    <!-- TABS -->
-    <div class="flex gap-1 mb-5 bg-slate-900/50 rounded-xl p-1 w-fit">
-      <template x-for="t in tabs" :key="t.id">
-        <button @click="switchTab(t.id)"
-          class="px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200"
-          :class="tab === t.id ? 'bg-indigo-500/15 text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'">
-          <span x-text="t.label"></span>
-          <span x-show="t.id === 'reviews' && data.metrics?.pending_reviews > 0"
-                class="ml-1 px-1.5 py-0.5 text-[10px] rounded-full bg-amber-500/20 text-amber-400"
-                x-text="data.metrics?.pending_reviews"></span>
-        </button>
-      </template>
+      <div class="sidebar-logo-text">Policy<em>Lens</em></div>
     </div>
 
-    <!-- ═══ DASHBOARD TAB ═══ -->
-    <div x-show="tab === 'dashboard'" class="fade-enter space-y-5">
+    <!-- Main Nav -->
+    <div class="nav-section-label">Monitor</div>
 
-      <!-- Metric Cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <template x-for="m in metricCards" :key="m.key">
-          <div class="card rounded-xl p-4 transition-all duration-200">
-            <p class="text-[11px] uppercase tracking-wider mb-1.5 text-slate-500" x-text="m.label"></p>
-            <p class="text-2xl font-bold tabular-nums" :class="m.color || 'text-white'"
-               x-text="formatMetric(m.key)"></p>
-          </div>
-        </template>
+    <button class="nav-item" :class="tab==='dashboard' && 'active'" @click="switchTab('dashboard')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" :class="tab==='violations' && 'active'" @click="switchTab('violations')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+      Violations
+    </button>
+    <button class="nav-item" :class="tab==='reviews' && 'active'" @click="switchTab('reviews')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Review Queue
+      <span x-show="data.metrics?.pending_reviews > 0" class="nav-badge" x-text="data.metrics?.pending_reviews"></span>
+    </button>
+    <button class="nav-item" :class="tab==='history' && 'active'" @click="switchTab('history')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Scan History
+    </button>
+
+    <div class="nav-section-label" style="margin-top:0.5rem">Configure</div>
+
+    <button class="nav-item" :class="tab==='scan' && 'active'" @click="switchTab('scan')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+      New Scan
+    </button>
+    <button class="nav-item" :class="tab==='rules' && 'active'" @click="switchTab('rules')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+      Rules
+    </button>
+    <button class="nav-item" :class="tab==='policies' && 'active'" @click="switchTab('policies')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+      Policies
+    </button>
+
+    <!-- Footer -->
+    <div class="sidebar-footer">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span class="conn-dot" :class="connected ? 'conn-live' : 'conn-off'"></span>
+        <span style="font-family:var(--font-mono); font-size:10px; letter-spacing:0.08em; text-transform:uppercase;"
+          :class="connected ? 'text-[#40916C]' : 'text-[#E74C3C]'"
+          :style="connected ? 'color:#40916C' : 'color:#E74C3C'"
+          x-text="connected ? 'Live' : 'Offline'"></span>
       </div>
-
-      <!-- Charts Row -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-        <!-- Compliance Gauge (Pure SVG) -->
-        <div class="card rounded-xl p-5">
-          <p class="text-xs font-semibold text-slate-400 mb-4">Compliance Score</p>
-          <div class="flex flex-col items-center justify-center" style="height:200px">
-            <svg viewBox="0 0 200 120" class="w-52">
-              <!-- Track -->
-              <path d="M 20 100 A 80 80 0 0 1 180 100" class="gauge-track" />
-              <!-- Filled arc -->
-              <path d="M 20 100 A 80 80 0 0 1 180 100" class="gauge-fill"
-                    :stroke="gaugeColor"
-                    :stroke-dasharray="gaugeArc"
-                    :stroke-dashoffset="gaugeDash" />
-              <!-- Value -->
-              <text x="100" y="88" text-anchor="middle" class="text-3xl font-bold" fill="currentColor"
-                    :fill="gaugeColor" style="font-size:32px;font-weight:800;font-family:Inter,sans-serif"
-                    x-text="complianceRate + '%'"></text>
-              <text x="100" y="108" text-anchor="middle" fill="#64748b" style="font-size:11px;font-family:Inter,sans-serif">Compliance</text>
-            </svg>
-          </div>
-        </div>
-
-        <!-- Severity Breakdown (Pure CSS Bars) -->
-        <div class="card rounded-xl p-5">
-          <p class="text-xs font-semibold text-slate-400 mb-4">Severity Breakdown</p>
-          <div class="flex items-end justify-center gap-5" style="height:200px">
-            <template x-for="bar in severityBars" :key="bar.label">
-              <div class="flex flex-col items-center gap-2">
-                <!-- Value -->
-                <span class="text-xs font-bold tabular-nums" :style="`color:${bar.color}`" x-text="bar.value"></span>
-                <!-- Bar -->
-                <div class="w-10 bg-white/[0.03] rounded-t-lg" style="height:140px;position:relative">
-                  <div class="bar-fill absolute bottom-0 left-0 right-0"
-                       :style="`height:${bar.pct}%;background:${bar.color}`"></div>
-                </div>
-                <!-- Label -->
-                <span class="text-[11px] text-slate-500" x-text="bar.label"></span>
-              </div>
-            </template>
-          </div>
-        </div>
-
-        <!-- Analysis Types (Pure SVG Donut) -->
-        <div class="card rounded-xl p-5">
-          <p class="text-xs font-semibold text-slate-400 mb-4">Analysis Types</p>
-          <div class="flex flex-col items-center justify-center" style="height:200px">
-            <svg viewBox="0 0 120 120" class="w-32 mb-4">
-              <circle cx="60" cy="60" r="50" class="donut-track" />
-              <!-- SQL segment -->
-              <circle cx="60" cy="60" r="50" class="donut-segment" stroke="#6366f1"
-                      :stroke-dasharray="sqlDonutDash" stroke-dashoffset="78.5"
-                      transform="rotate(-90 60 60)" />
-              <!-- RAG segment -->
-              <circle cx="60" cy="60" r="50" class="donut-segment" stroke="#a855f7"
-                      :stroke-dasharray="ragDonutDash"
-                      :stroke-dashoffset="ragDonutOffset"
-                      transform="rotate(-90 60 60)" />
-              <!-- Center text -->
-              <text x="60" y="58" text-anchor="middle" fill="white" style="font-size:18px;font-weight:700;font-family:Inter,sans-serif"
-                    x-text="totalAnalysed"></text>
-              <text x="60" y="72" text-anchor="middle" fill="#64748b" style="font-size:9px;font-family:Inter,sans-serif">total scans</text>
-            </svg>
-            <!-- Legend -->
-            <div class="flex items-center gap-5">
-              <div class="flex items-center gap-1.5">
-                <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
-                <span class="text-xs text-slate-400">SQL (<span x-text="sqlCount"></span>)</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="w-2.5 h-2.5 rounded-full bg-violet-500"></span>
-                <span class="text-xs text-slate-400">RAG (<span x-text="ragCount"></span>)</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
+      <div style="font-family:var(--font-mono); font-size:9px; color:rgba(255,255,255,0.2); margin-top:4px; letter-spacing:0.06em;">
+          Team RuleSmiths
       </div>
+    </div>
+  </aside>
 
-      <!-- Recent Scans + AI Insight -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <!-- Recent Scans -->
-        <div class="card rounded-xl p-5">
-          <p class="text-xs font-semibold text-slate-400 mb-4">Recent Scans</p>
-          <div class="space-y-1.5 max-h-[320px] overflow-y-auto">
-            <template x-if="!data.recent_activity?.length">
-              <p class="text-sm text-slate-600 text-center py-6">No scans yet. Upload a file to begin.</p>
-            </template>
-            <template x-for="item in (data.recent_activity || [])" :key="item.id">
-              <div class="flex items-center justify-between p-3 rounded-lg hover:bg-white/[0.03] transition cursor-pointer group"
-                   @click="switchTab('history')">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-lg flex items-center justify-center"
-                       :class="item.compliant ? 'bg-emerald-500/10' : 'bg-red-500/10'">
-                    <svg x-show="item.compliant" class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-                    <svg x-show="!item.compliant" class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z M12 15.75h.007v.008H12v-.008z"/></svg>
-                  </div>
-                  <div>
-                    <p class="text-sm font-medium text-slate-200 group-hover:text-white transition" x-text="item.id"></p>
-                    <p class="text-[11px] text-slate-500">
-                      <span x-text="item.type"></span> ·
-                      <span x-text="item.timestamp ? new Date(item.timestamp).toLocaleString() : ''"></span>
-                    </p>
-                  </div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="text-sm font-mono font-semibold tabular-nums"
-                        :class="item.compliant ? 'text-emerald-400' : 'text-red-400'"
-                        x-text="Math.round(item.score ?? item.confidence * 100) + '%'"></span>
-                  <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide"
-                        :class="item.compliant ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'"
-                        x-text="item.compliant ? 'Pass' : 'Fail'"></span>
-                </div>
-              </div>
-            </template>
-          </div>
-        </div>
+  <!-- ===================== MAIN AREA ===================== -->
+  <div class="main-area">
 
-        <!-- AI Insight -->
-        <div class="card rounded-xl p-5">
-          <p class="text-xs font-semibold text-slate-400 mb-4 flex items-center gap-2">
-            <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"/></svg>
-            Latest AI Insight
-          </p>
-          <template x-if="!data.latest_feedback">
-            <p class="text-sm text-slate-600 text-center py-6">No AI feedback yet.</p>
-          </template>
-          <template x-if="data.latest_feedback">
-            <div class="space-y-4">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <span class="text-xs font-bold px-3 py-1 rounded-lg"
-                        :class="data.latest_feedback.overall_assessment === 'COMPLIANT'
-                          ? 'bg-emerald-500/10 text-emerald-400'
-                          : 'bg-red-500/10 text-red-400'"
-                        x-text="data.latest_feedback.overall_assessment"></span>
-                  <span class="text-xs text-slate-500">
-                    Confidence: <span class="text-white font-semibold" x-text="Math.round((data.latest_feedback.llm_confidence || 0) * 100) + '%'"></span>
-                  </span>
-                </div>
-                <span class="text-[11px] text-slate-600 font-mono" x-text="data.latest_feedback.evaluation_id"></span>
-              </div>
-              <p class="text-sm text-slate-300 leading-relaxed" x-text="data.latest_feedback.risk_narrative"></p>
-              <template x-if="data.latest_feedback.violated_policies?.length">
-                <div>
-                  <p class="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Violated Policies</p>
-                  <div class="flex flex-wrap gap-1.5">
-                    <template x-for="(p, i) in data.latest_feedback.violated_policies" :key="i">
-                      <span class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/20" x-text="p"></span>
-                    </template>
-                  </div>
-                </div>
-              </template>
-              <template x-if="data.latest_feedback.key_findings?.length">
-                <div>
-                  <p class="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Key Findings</p>
-                  <template x-for="(f, i) in data.latest_feedback.key_findings" :key="i">
-                    <div class="flex items-start gap-2 mb-1.5">
-                      <svg class="w-3 h-3 mt-1 text-indigo-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
-                      <span class="text-sm text-slate-300" x-text="f"></span>
-                    </div>
-                  </template>
-                </div>
-              </template>
-              <template x-if="data.latest_feedback.recommendations?.length">
-                <div>
-                  <p class="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Recommendations</p>
-                  <template x-for="(r, i) in data.latest_feedback.recommendations" :key="i">
-                    <div class="flex items-start gap-2 mb-1.5">
-                      <svg class="w-3 h-3 mt-1 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"/></svg>
-                      <span class="text-sm text-slate-300" x-text="r"></span>
-                    </div>
-                  </template>
-                </div>
-              </template>
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div>
+        <div class="page-title" x-text="pageTitle()"></div>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-meta" x-text="new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})"></span>
+        <button @click="refresh()" class="icon-btn" title="Refresh">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" :class="loading && 'spinner'">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- PAGE CONTENT -->
+    <main class="page-content">
+
+      <!-- ===================== DASHBOARD ===================== -->
+      <div x-show="tab === 'dashboard'" class="fade-enter" style="max-width:1400px">
+
+        <!-- KPI Row -->
+        <div class="kpi-grid" style="display:grid; grid-template-columns:repeat(6,1fr); gap:0.75rem; margin-bottom:1.5rem;">
+          <template x-for="m in metricCards" :key="m.key">
+            <div class="kpi-card" :class="m.cardClass">
+              <div class="kpi-label" x-text="m.label"></div>
+              <div class="kpi-value" :class="m.valueClass" x-text="formatMetric(m.key)"></div>
             </div>
           </template>
         </div>
-      </div>
-    </div>
 
-    <!-- ═══ NEW SCAN TAB ═══ -->
-    <div x-show="tab === 'scan'" x-cloak class="fade-enter">
-      <div class="max-w-xl mx-auto">
-        <div class="card rounded-2xl p-8">
-          <div class="text-center mb-8">
-            <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+        <!-- Charts Row -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
+
+          <!-- Gauge -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Compliance Score
+              </span>
             </div>
-            <h2 class="text-lg font-bold text-white">Run Compliance Scan</h2>
-            <p class="text-sm text-slate-500 mt-1">Upload a CSV or PDF to analyze against policies</p>
+            <div style="padding:1.25rem; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:200px;">
+              <svg viewBox="0 0 200 120" style="width:200px;">
+                <path d="M 20 100 A 80 80 0 0 1 180 100" class="gauge-track" />
+                <path d="M 20 100 A 80 80 0 0 1 180 100" class="gauge-fill" :stroke="gaugeColor" :stroke-dasharray="gaugeArc" :stroke-dashoffset="gaugeDash" />
+                <text x="100" y="84" text-anchor="middle" :fill="gaugeColor" style="font-size:28px;font-weight:700;font-family:'DM Serif Display',serif" x-text="complianceRate + '%'"></text>
+                <text x="100" y="104" text-anchor="middle" style="font-size:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.1em;text-transform:uppercase" fill="#AAA">Compliance Rate</text>
+              </svg>
+            </div>
           </div>
 
-          <!-- Drop Zone -->
-          <div class="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200"
-               :class="dragging ? 'border-indigo-500 bg-indigo-500/5' : 'border-slate-700 hover:border-slate-500'"
-               @dragover.prevent="dragging = true" @dragleave.prevent="dragging = false"
-               @drop.prevent="dragging = false; handleDrop($event)"
-               @click="$refs.fileInput.click()">
-            <svg class="w-10 h-10 mx-auto mb-3" :class="dragging ? 'text-indigo-400' : 'text-slate-600'" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-            <p class="text-slate-400 text-sm">Drop file here or <span class="text-indigo-400 font-medium">browse</span></p>
-            <p class="text-xs text-slate-600 mt-1">CSV or PDF · Max 3 GB</p>
-            <input type="file" x-ref="fileInput" accept=".csv,.pdf" class="hidden" @change="handleFileSelect($event)" />
+          <!-- Severity Bars -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
+                Severity Breakdown
+              </span>
+            </div>
+            <div style="padding:1.25rem; display:flex; align-items:flex-end; justify-content:center; gap:1.5rem; min-height:200px;">
+              <template x-for="bar in severityBars" :key="bar.label">
+                <div style="display:flex; flex-direction:column; align-items:center; gap:0.4rem;">
+                  <span style="font-family:var(--font-mono); font-size:11px; font-weight:500;" :style="`color:${bar.color}`" x-text="bar.value"></span>
+                  <div style="width:36px; height:130px; position:relative; background:var(--border-light); border-radius:3px 3px 0 0;">
+                    <div class="bar-fill" style="position:absolute; bottom:0; left:0; right:0;" :style="`height:${bar.pct}%; background:${bar.color}`"></div>
+                  </div>
+                  <span style="font-family:var(--font-mono); font-size:9.5px; color:var(--text-muted);" x-text="bar.label"></span>
+                </div>
+              </template>
+            </div>
           </div>
 
-          <!-- Selected File -->
-          <div x-show="scanFile" x-cloak class="mt-4 card rounded-lg p-3 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+          <!-- Donut -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z"/><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z"/></svg>
+                Analysis Types
+              </span>
+            </div>
+            <div style="padding:1.25rem; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:200px; gap:1rem;">
+              <svg viewBox="0 0 120 120" style="width:110px;">
+                <circle cx="60" cy="60" r="50" class="donut-track" />
+                <circle cx="60" cy="60" r="50" class="donut-segment" :stroke="'#0E7C7B'" :stroke-dasharray="sqlDonutDash" stroke-dashoffset="78.5" transform="rotate(-90 60 60)" />
+                <circle cx="60" cy="60" r="50" class="donut-segment" :stroke="'#40916C'" :stroke-dasharray="ragDonutDash" :stroke-dashoffset="ragDonutOffset" transform="rotate(-90 60 60)" />
+                <text x="60" y="56" text-anchor="middle" fill="#1A2744" style="font-size:18px;font-weight:700;font-family:'DM Serif Display',serif" x-text="totalAnalysed"></text>
+                <text x="60" y="70" text-anchor="middle" fill="#AAA" style="font-size:8px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.1em;text-transform:uppercase">total scans</text>
+              </svg>
+              <div style="display:flex; gap:1.25rem;">
+                <div style="display:flex; align-items:center; gap:0.4rem;">
+                  <span style="width:8px;height:8px;border-radius:50%;background:var(--teal);display:inline-block;"></span>
+                  <span style="font-family:var(--font-mono); font-size:10.5px; color:var(--text-muted);">SQL (<span x-text="sqlCount"></span>)</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:0.4rem;">
+                  <span style="width:8px;height:8px;border-radius:50%;background:var(--sage-light);display:inline-block;"></span>
+                  <span style="font-family:var(--font-mono); font-size:10.5px; color:var(--text-muted);">RAG (<span x-text="ragCount"></span>)</span>
+                </div>
               </div>
-              <div>
-                <p class="text-sm font-medium text-white" x-text="scanFile?.name"></p>
-                <p class="text-xs text-slate-500" x-text="formatBytes(scanFile?.size || 0)"></p>
-              </div>
-            </div>
-            <button @click="scanFile = null" class="p-1 rounded hover:bg-white/5 text-slate-400 hover:text-red-400 transition">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-          </div>
-
-          <!-- Scan Button -->
-          <button @click="startScan()" :disabled="!scanFile || scanning"
-                  class="w-full mt-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 shadow-lg"
-                  :class="scanFile && !scanning
-                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-500 hover:to-violet-500 shadow-indigo-500/20'
-                    : 'bg-slate-800 text-slate-500 cursor-not-allowed shadow-none'">
-            <span x-show="!scanning">Start Compliance Scan</span>
-            <span x-show="scanning" class="flex items-center justify-center gap-2">
-              <svg class="w-4 h-4 spinner" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M2.985 14.652"/></svg>
-              Scanning...
-            </span>
-          </button>
-
-          <!-- Progress -->
-          <div x-show="scanning" x-cloak class="mt-5 space-y-3">
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-400" x-text="scanStatus"></span>
-              <span class="text-slate-500 tabular-nums" x-text="scanProgress + '%'"></span>
-            </div>
-            <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-              <div class="h-full rounded-full progress-bar"
-                   :class="scanError ? 'bg-red-500' : 'bg-gradient-to-r from-indigo-500 to-violet-500'"
-                   :style="`width: ${scanProgress}%`"></div>
             </div>
           </div>
+        </div>
 
-          <!-- Result -->
-          <div x-show="scanResult" x-cloak class="mt-5 card rounded-xl p-5 fade-enter">
-            <template x-if="scanResult">
-              <div>
-                <div class="flex items-center justify-between mb-4">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl flex items-center justify-center"
-                         :class="scanResult.compliant ? 'bg-emerald-500/10' : 'bg-red-500/10'">
-                      <svg x-show="scanResult.compliant" class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                      <svg x-show="!scanResult.compliant" class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+        <!-- Bottom Row -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+
+          <!-- Recent Scans -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Recent Scans
+              </span>
+              <button @click="switchTab('history')" class="btn btn-ghost btn-sm" style="font-size:11px;">View All</button>
+            </div>
+            <div style="max-height:300px; overflow-y:auto;">
+              <template x-if="!data.recent_activity?.length">
+                <div style="padding:2.5rem; text-align:center; color:var(--text-muted); font-size:13px;">
+                  No scans yet. Upload a file to begin.
+                </div>
+              </template>
+              <template x-for="item in (data.recent_activity || [])" :key="item.id">
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:0.7rem 1.1rem; border-bottom:1px solid var(--border-light); cursor:pointer; transition:background 0.12s;"
+                  @click="switchTab('history')"
+                  onmouseover="this.style.background='#FAFAF7'" onmouseout="this.style.background='transparent'">
+                  <div style="display:flex; align-items:center; gap:0.7rem;">
+                    <div style="width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; flex-shrink:0;"
+                      :style="item.compliant ? 'background:#DCFCE7' : 'background:#FEE2E2'">
+                      <svg x-show="item.compliant" width="13" height="13" fill="none" stroke="#2D6A4F" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                      <svg x-show="!item.compliant" width="13" height="13" fill="none" stroke="#C0392B" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     </div>
                     <div>
-                      <p class="font-bold" :class="scanResult.compliant ? 'text-emerald-400' : 'text-red-400'"
-                         x-text="scanResult.compliant ? 'COMPLIANT' : 'NON-COMPLIANT'"></p>
-                      <p class="text-[11px] text-slate-500" x-text="(scanResult.evaluation_id || '') + ' · ' + (scanResult.analysis_type || '') + ' Analysis'"></p>
+                      <div style="font-family:var(--font-mono); font-size:11px; color:var(--navy); font-weight:500;" x-text="item.id"></div>
+                      <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-muted);">
+                        <span x-text="item.type"></span> &middot; <span x-text="item.timestamp ? new Date(item.timestamp).toLocaleString() : ''"></span>
+                      </div>
                     </div>
                   </div>
-                  <div class="text-right">
-                    <p class="text-2xl font-bold tabular-nums" :class="scanResult.compliant ? 'text-emerald-400' : 'text-red-400'"
-                       x-text="(scanResult.compliance_score ?? (scanResult.compliant ? 100 : 0)) + '%'"></p>
-                    <p class="text-[11px] text-slate-500">Confidence: <span x-text="Math.round((scanResult.confidence || 0) * 100) + '%'"></span></p>
+                  <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <span style="font-family:var(--font-mono); font-size:13px; font-weight:600;"
+                      :style="item.compliant ? 'color:var(--sage)' : 'color:var(--rose)'"
+                      x-text="Math.round(item.score ?? item.confidence * 100) + '%'"></span>
+                    <span class="badge" :class="item.compliant ? 'badge-pass' : 'badge-fail'" x-text="item.compliant ? 'PASS' : 'FAIL'"></span>
                   </div>
                 </div>
-                <template x-if="scanResult.violated_policies?.length > 0">
-                  <div class="border-t border-slate-800 pt-3">
-                    <p class="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Violated Policies</p>
-                    <div class="flex flex-wrap gap-1">
-                      <template x-for="(v, vi) in scanResult.violated_policies" :key="vi">
-                        <span class="px-2 py-0.5 rounded text-xs bg-red-500/10 text-red-300" x-text="v"></span>
+              </template>
+            </div>
+          </div>
+
+          <!-- AI Insight -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+                Latest AI Insight
+              </span>
+            </div>
+            <div style="padding:1.1rem 1.25rem; max-height:300px; overflow-y:auto;">
+              <template x-if="!data.latest_feedback">
+                <div style="padding:2rem; text-align:center; color:var(--text-muted); font-size:13px;">No AI feedback yet.</div>
+              </template>
+              <template x-if="data.latest_feedback">
+                <div style="display:flex; flex-direction:column; gap:0.9rem;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                      <span class="badge" :class="data.latest_feedback.overall_assessment === 'COMPLIANT' ? 'badge-pass' : 'badge-fail'" x-text="data.latest_feedback.overall_assessment"></span>
+                      <span style="font-family:var(--font-mono); font-size:10px; color:var(--text-muted);">
+                        Confidence: <strong style="color:var(--navy);" x-text="Math.round((data.latest_feedback.llm_confidence || 0) * 100) + '%'"></strong>
+                      </span>
+                    </div>
+                    <span style="font-family:var(--font-mono); font-size:10px; color:var(--text-muted);" x-text="data.latest_feedback.evaluation_id"></span>
+                  </div>
+                  <p style="font-size:13px; color:var(--text-body); line-height:1.6;" x-text="data.latest_feedback.risk_narrative"></p>
+                  <template x-if="data.latest_feedback.violated_policies?.length">
+                    <div>
+                      <div class="section-label-sm" style="margin-bottom:0.4rem;">Violated Policies</div>
+                      <div style="display:flex; flex-wrap:wrap; gap:0.35rem;">
+                        <template x-for="(p, i) in data.latest_feedback.violated_policies" :key="i">
+                          <span class="badge badge-fail" x-text="p"></span>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+                  <template x-if="data.latest_feedback.key_findings?.length">
+                    <div>
+                      <div class="section-label-sm" style="margin-bottom:0.4rem;">Key Findings</div>
+                      <template x-for="(f, i) in data.latest_feedback.key_findings" :key="i">
+                        <div style="display:flex; gap:0.5rem; align-items:flex-start; margin-bottom:0.35rem;">
+                          <svg style="margin-top:3px; flex-shrink:0; color:var(--teal);" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+                          <span style="font-size:12.5px; color:var(--text-body);" x-text="f"></span>
+                        </div>
                       </template>
                     </div>
+                  </template>
+                  <template x-if="data.latest_feedback.recommendations?.length">
+                    <div>
+                      <div class="section-label-sm" style="margin-bottom:0.4rem;">Recommendations</div>
+                      <template x-for="(r, i) in data.latest_feedback.recommendations" :key="i">
+                        <div style="display:flex; gap:0.5rem; align-items:flex-start; margin-bottom:0.35rem;">
+                          <svg style="margin-top:3px; flex-shrink:0; color:var(--amber);" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"/></svg>
+                          <span style="font-size:12.5px; color:var(--text-body);" x-text="r"></span>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== NEW SCAN ===================== -->
+      <div x-show="tab === 'scan'" x-cloak class="fade-enter" style="max-width:560px;">
+        <div class="card" style="overflow:hidden;">
+          <div style="background:var(--navy); padding:2rem 2rem 1.5rem;">
+            <div style="width:48px; height:48px; background:rgba(14,124,123,0.25); border:1px solid rgba(21,168,166,0.3); border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:1rem;">
+              <svg width="22" height="22" fill="none" stroke="var(--teal-light)" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+            </div>
+            <div style="font-family:var(--font-display); font-size:1.4rem; color:white; margin-bottom:0.3rem;">Run Compliance Scan</div>
+            <div style="font-family:var(--font-mono); font-size:10px; color:rgba(255,255,255,0.4); letter-spacing:0.08em; text-transform:uppercase;">Upload a CSV or PDF to analyze against active policies</div>
+          </div>
+          <div style="padding:1.75rem;">
+            <div class="drop-zone" style="padding:2.5rem 1.5rem; text-align:center;"
+                 :class="dragging && 'drop-active'"
+                 @dragover.prevent="dragging = true" @dragleave.prevent="dragging = false"
+                 @drop.prevent="dragging = false; handleDrop($event)"
+                 @click="$refs.fileInput.click()">
+              <svg style="display:block; margin:0 auto 0.75rem; opacity:0.4;" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+              <p style="font-size:13.5px; color:var(--text-body);">Drop file here or <span style="color:var(--teal); font-weight:600; cursor:pointer;">browse</span></p>
+              <p style="font-family:var(--font-mono); font-size:10px; color:var(--text-muted); margin-top:0.3rem;">CSV or PDF &middot; Max 3 GB</p>
+              <input type="file" x-ref="fileInput" accept=".csv,.pdf" class="hidden" @change="handleFileSelect($event)" />
+            </div>
+
+            <div x-show="scanFile" x-cloak style="margin-top:0.9rem; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:0.75rem 1rem; display:flex; align-items:center; justify-content:space-between;">
+              <div style="display:flex; align-items:center; gap:0.7rem;">
+                <div style="width:34px; height:34px; background:rgba(14,124,123,0.1); border-radius:6px; display:flex; align-items:center; justify-content:center;">
+                  <svg width="16" height="16" fill="none" stroke="var(--teal)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:13px; font-weight:500; color:var(--navy);" x-text="scanFile?.name"></div>
+                  <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-muted);" x-text="formatBytes(scanFile?.size || 0)"></div>
+                </div>
+              </div>
+              <button @click="scanFile = null" style="width:28px; height:28px; border-radius:5px; display:flex; align-items:center; justify-content:center; border:1px solid var(--border); background:transparent; cursor:pointer; color:#999;" onmouseover="this.style.borderColor='var(--rose)'; this.style.color='var(--rose)'" onmouseout="this.style.borderColor='var(--border)'; this.style.color='#999'">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            <button @click="startScan()" :disabled="!scanFile || scanning" class="btn" style="width:100%; margin-top:1rem; justify-content:center; padding:0.7rem;"
+              :style="scanFile && !scanning ? 'background:var(--navy); color:white;' : 'background:#E8E3DC; color:#AAA; cursor:not-allowed;'">
+              <span x-show="!scanning">Start Compliance Scan</span>
+              <span x-show="scanning" style="display:flex; align-items:center; gap:0.5rem;">
+                <svg class="spinner" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M2.985 14.652"/></svg>
+                Scanning...
+              </span>
+            </button>
+
+            <div x-show="scanning" x-cloak style="margin-top:1rem;">
+              <div style="display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10.5px; color:var(--text-muted); margin-bottom:0.4rem;">
+                <span x-text="scanStatus"></span>
+                <span x-text="scanProgress + '%'"></span>
+              </div>
+              <div class="prog-track">
+                <div class="prog-fill" :class="scanError ? 'prog-rose' : 'prog-teal'" :style="`width:${scanProgress}%`"></div>
+              </div>
+            </div>
+
+            <div x-show="scanResult" x-cloak class="fade-enter" style="margin-top:1.25rem; border-radius:8px; overflow:hidden; border:1px solid var(--border);" :class="scanResult?.compliant ? 'result-pass' : 'result-fail'">
+              <template x-if="scanResult">
+                <div style="padding:1.1rem 1.25rem;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                    <div style="display:flex; align-items:center; gap:0.6rem;">
+                      <div style="width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center;"
+                        :style="scanResult.compliant ? 'background:#DCFCE7' : 'background:#FEE2E2'">
+                        <svg x-show="scanResult.compliant" width="18" height="18" fill="none" stroke="#2D6A4F" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <svg x-show="!scanResult.compliant" width="18" height="18" fill="none" stroke="#C0392B" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+                      </div>
+                      <div>
+                        <div style="font-weight:600; font-size:13.5px;" :style="scanResult.compliant ? 'color:var(--sage)' : 'color:var(--rose)'" x-text="scanResult.compliant ? 'COMPLIANT' : 'NON-COMPLIANT'"></div>
+                        <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-muted);" x-text="(scanResult.evaluation_id || '') + ' · ' + (scanResult.analysis_type || '') + ' Analysis'"></div>
+                      </div>
+                    </div>
+                    <div style="text-align:right;">
+                      <div style="font-family:var(--font-display); font-size:1.6rem; line-height:1;" :style="scanResult.compliant ? 'color:var(--sage)' : 'color:var(--rose)'" x-text="(scanResult.compliance_score ?? (scanResult.compliant ? 100 : 0)) + '%'"></div>
+                      <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-muted);">Confidence: <span x-text="Math.round((scanResult.confidence || 0) * 100) + '%'"></span></div>
+                    </div>
                   </div>
+                  <template x-if="scanResult.violated_policies?.length > 0">
+                    <div style="border-top:1px solid var(--border-light); padding-top:0.75rem; margin-top:0.5rem;">
+                      <div class="section-label-sm" style="margin-bottom:0.4rem;">Violated Policies</div>
+                      <div style="display:flex; flex-wrap:wrap; gap:0.3rem;">
+                        <template x-for="(v, vi) in scanResult.violated_policies" :key="vi">
+                          <span class="badge badge-fail" x-text="v"></span>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== HISTORY ===================== -->
+      <div x-show="tab === 'history'" x-cloak class="fade-enter" style="max-width:1400px;">
+        <div class="card" style="overflow:hidden;">
+          <div class="card-header">
+            <span class="card-title">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Scan History &mdash; <span x-text="history.length + ' records'"></span>
+            </span>
+            <div style="display:flex; gap:0.5rem;">
+              <button @click="clearHistory()" class="btn btn-amber btn-sm">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                Clear Logs
+              </button>
+              <button @click="deleteAllHistory()" class="btn btn-danger btn-sm">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                Delete All
+              </button>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">Eval ID</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Score</th>
+                  <th scope="col">Confidence</th>
+                  <th scope="col">AI Assessment</th>
+                  <th scope="col" style="text-align:center;">Violations</th>
+                  <th scope="col">Time</th>
+                  <th scope="col" style="text-align:center;">Report</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-if="history.length === 0">
+                  <tr><td colspan="9" style="text-align:center; padding:3rem; color:var(--text-muted); font-size:13px;">No scan history yet</td></tr>
                 </template>
+                <template x-for="h in history" :key="h.evaluation_id">
+                  <tr>
+                    <td class="td-mono" x-text="h.evaluation_id"></td>
+                    <td><span class="badge" :class="h.analysis_type==='SQL' ? 'badge-sql' : 'badge-rag'" x-text="h.analysis_type"></span></td>
+                    <td><span class="badge" :class="h.compliant ? 'badge-pass' : 'badge-fail'" x-text="h.compliant ? 'PASS' : 'FAIL'"></span></td>
+                    <td style="font-family:var(--font-mono); font-size:12px;" x-text="h.compliance_score != null ? h.compliance_score + '%' : '—'"></td>
+                    <td style="font-family:var(--font-mono); font-size:12px;" x-text="Math.round((h.confidence || 0) * 100) + '%'"></td>
+                    <td>
+                      <span x-show="h.llm_assessment" class="badge" :class="h.llm_assessment === 'COMPLIANT' ? 'badge-pass' : 'badge-fail'" x-text="h.llm_assessment"></span>
+                      <span x-show="!h.llm_assessment" style="color:var(--text-muted);">—</span>
+                    </td>
+                    <td style="text-align:center; font-family:var(--font-mono); font-size:12px;" :style="(h.violated_policies?.length || 0) > 0 ? 'color:var(--rose); font-weight:600' : 'color:var(--text-muted)'" x-text="h.violated_policies?.length || 0"></td>
+                    <td style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted);" x-text="h.timestamp ? new Date(h.timestamp).toLocaleString() : ''"></td>
+                    <td style="text-align:center;">
+                      <button @click="downloadInsightPdf(h.evaluation_id)" class="btn btn-ghost btn-sm" style="font-size:11px; gap:0.3rem;">
+                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                        PDF
+                      </button>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== VIOLATIONS ===================== -->
+      <div x-show="tab === 'violations'" x-cloak class="fade-enter" style="max-width:900px;">
+        <div class="card" style="overflow:hidden;">
+          <div class="card-header">
+            <span class="card-title">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+              Auto-Logged Violations
+            </span>
+          </div>
+          <div style="padding:1.1rem 1.25rem;">
+            <template x-if="violations.length === 0">
+              <div style="padding:3rem; text-align:center;">
+                <svg style="display:block; margin:0 auto 0.75rem; opacity:0.2;" width="44" height="44" fill="none" stroke="var(--sage)" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <div style="font-weight:600; color:var(--sage); font-size:14px; margin-bottom:0.25rem;">No violations detected</div>
+                <div style="font-size:12.5px; color:var(--text-muted);">All scanned records are within policy bounds.</div>
+              </div>
+            </template>
+            <div style="display:flex; flex-direction:column; gap:0.75rem;">
+              <template x-for="v in violations" :key="v.record_id">
+                <div class="card violation-card" style="padding:1.1rem 1.25rem;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.6rem;">
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                      <svg width="14" height="14" fill="none" stroke="var(--rose)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                      <span style="font-family:var(--font-mono); font-size:12px; font-weight:600; color:var(--navy);" x-text="v.record_id"></span>
+                      <span class="badge" :class="v.tier==='SQL' ? 'badge-sql' : 'badge-rag'" x-text="v.tier || v.analysis_type || 'RAG'"></span>
+                    </div>
+                    <span style="font-family:var(--font-mono); font-size:11.5px; font-weight:600;" :style="(v.confidence || 0) >= 0.95 ? 'color:var(--rose)' : 'color:var(--amber)'" x-text="Math.round((v.confidence || 0) * 100) + '% confidence'"></span>
+                  </div>
+                  <p style="font-size:13px; color:var(--text-body); line-height:1.6; margin-bottom:0.65rem;" x-text="((v.explanation || '') + '').substring(0, 300)"></p>
+                  <div style="display:flex; flex-wrap:wrap; gap:0.3rem; margin-bottom:0.5rem;">
+                    <template x-for="(r, ri) in (v.cited_rule_ids || [])" :key="ri">
+                      <span class="badge badge-fail" x-text="r"></span>
+                    </template>
+                  </div>
+                  <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-muted);" x-text="v.timestamp ? new Date(v.timestamp).toLocaleString() : ''"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== REVIEWS ===================== -->
+      <div x-show="tab === 'reviews'" x-cloak class="fade-enter" style="max-width:900px;">
+        <div class="card" style="overflow:hidden;">
+          <div class="card-header">
+            <span class="card-title">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              Human Review Queue
+              <span x-show="reviews.length > 0" style="margin-left:0.25rem; background:#FEF9C3; color:#92400E; border:1px solid #FDE68A; padding:0.1rem 0.45rem; border-radius:10px; font-size:9px;" x-text="reviews.length + ' pending'"></span>
+            </span>
+          </div>
+          <div style="padding:1.1rem 1.25rem;">
+            <template x-if="reviews.length === 0">
+              <div style="padding:3rem; text-align:center;">
+                <div style="font-size:1.5rem; margin-bottom:0.5rem;">✓</div>
+                <div style="font-weight:600; color:var(--sage); font-size:14px; margin-bottom:0.25rem;">Queue Clear</div>
+                <div style="font-size:12.5px; color:var(--text-muted);">All cases reviewed</div>
+              </div>
+            </template>
+            <div style="display:flex; flex-direction:column; gap:0.75rem;">
+              <template x-for="r in reviews" :key="r.record_id">
+                <div class="card review-card" style="padding:1.1rem 1.25rem;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.6rem;">
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                      <svg width="14" height="14" fill="none" stroke="var(--amber)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                      <span style="font-family:var(--font-mono); font-size:12px; font-weight:600; color:var(--navy);" x-text="r.record_id"></span>
+                      <span class="badge badge-review">IN REVIEW</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                      <div style="width:80px;">
+                        <div class="prog-track" style="height:4px;">
+                          <div class="prog-fill prog-amber" :style="`width:${Math.round((r.confidence || 0) * 100)}%`"></div>
+                        </div>
+                      </div>
+                      <span style="font-family:var(--font-mono); font-size:11.5px; font-weight:600; color:var(--amber);" x-text="Math.round((r.confidence || 0) * 100) + '%'"></span>
+                    </div>
+                  </div>
+                  <p style="font-size:13px; color:var(--text-body); line-height:1.6; margin-bottom:0.9rem;" x-text="((r.explanation || '') + '').substring(0, 250)"></p>
+                  <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                    <button @click="submitReview(r.record_id, 'confirmed_violation')" class="btn btn-danger btn-sm">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                      Confirm Violation
+                    </button>
+                    <button @click="submitReview(r.record_id, 'false_positive')" class="btn btn-sage btn-sm">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                      False Positive
+                    </button>
+                    <button @click="submitReview(r.record_id, 'needs_more_info')" class="btn btn-ghost btn-sm">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/></svg>
+                      Need More Info
+                    </button>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== RULES ===================== -->
+      <div x-show="tab === 'rules'" x-cloak class="fade-enter" style="max-width:900px;">
+        <div class="card" style="overflow:hidden;">
+          <div class="card-header">
+            <span class="card-title">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+              Compliance Rules &mdash; <span x-text="rules.length + ' active'"></span>
+            </span>
+          </div>
+          <div style="max-height:600px; overflow-y:auto;">
+            <template x-if="rules.length === 0">
+              <div style="padding:3rem; text-align:center; font-size:13px; color:var(--text-muted);">No rules extracted yet. Run a scan to ingest policies.</div>
+            </template>
+            <template x-for="rule in rules" :key="rule.rule_id">
+              <div style="display:flex; align-items:flex-start; gap:0.75rem; padding:0.85rem 1.1rem; border-bottom:1px solid var(--border-light); transition:background 0.12s;"
+                onmouseover="this.style.background='#FAFAF7'" onmouseout="this.style.background='transparent'">
+                <div style="width:30px; height:30px; border-radius:6px; background:rgba(14,124,123,0.08); display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">
+                  <svg width="14" height="14" fill="none" stroke="var(--teal)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+                </div>
+                <div style="flex:1; min-width:0;">
+                  <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.3rem;">
+                    <span style="font-family:var(--font-mono); font-size:12px; font-weight:500; color:var(--navy);" x-text="rule.rule_id"></span>
+                    <span class="badge" :class="(rule.complexity || rule.rule_complexity) === 'complex' ? 'badge-rag' : 'badge-sql'" x-text="(rule.complexity || rule.rule_complexity) === 'complex' ? 'RAG' : 'SQL'"></span>
+                  </div>
+                  <div style="font-size:13px; color:var(--text-body); margin-bottom:0.25rem;" x-text="rule.description || ''"></div>
+                  <div style="font-family:var(--font-mono); font-size:10.5px; color:var(--text-muted);"><span style="color:var(--navy-mid);">Condition:</span> <span x-text="rule.condition || '—'"></span></div>
+                </div>
               </div>
             </template>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- ═══ HISTORY TAB ═══ -->
-    <div x-show="tab === 'history'" x-cloak class="fade-enter">
-      <div class="card rounded-xl overflow-hidden">
-        <div class="p-4 border-b border-slate-800/60 flex items-center justify-between">
-          <div>
-            <p class="text-xs font-semibold text-slate-400">Scan History</p>
-            <p class="text-[11px] text-slate-600" x-text="history.length + ' scans'"></p>
+      <!-- ===================== POLICIES ===================== -->
+      <div x-show="tab === 'policies'" x-cloak class="fade-enter" style="max-width:680px;">
+        <!-- Upload Card -->
+        <div class="card" style="overflow:hidden; margin-bottom:1.5rem;">
+          <div style="background:var(--navy); padding:1.5rem 1.75rem 1.25rem;">
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.25rem;">
+              <div style="width:36px; height:36px; background:rgba(45,106,79,0.3); border:1px solid rgba(64,145,108,0.4); border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                <svg width="18" height="18" fill="none" stroke="#3DD68C" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+              </div>
+              <div>
+                <div style="font-family:var(--font-display); font-size:1.2rem; color:white;">Upload Policy PDFs</div>
+                <div style="font-family:var(--font-mono); font-size:9.5px; color:rgba(255,255,255,0.4); letter-spacing:0.06em; text-transform:uppercase; margin-top:1px;">Phase 1 auto re-runs when policies change</div>
+              </div>
+            </div>
           </div>
-          <div class="flex items-center gap-2">
-            <!-- Clear History (keeps violations/reviews) -->
-            <button @click="clearHistory()"
-                    class="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition font-medium">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-              Clear Logs
-            </button>
-            <!-- Delete All → Recycle Bin -->
-            <button @click="deleteAllHistory()"
-                    class="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition font-medium">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
-              Delete All
-            </button>
-          </div>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="text-[11px] text-slate-500 uppercase tracking-wider border-b border-slate-800/40">
-                <th class="px-4 py-3 text-left font-medium">Eval ID</th>
-                <th class="px-4 py-3 text-left font-medium">Type</th>
-                <th class="px-4 py-3 text-left font-medium">Status</th>
-                <th class="px-4 py-3 text-left font-medium">Score</th>
-                <th class="px-4 py-3 text-left font-medium">Confidence</th>
-                <th class="px-4 py-3 text-left font-medium">AI Assessment</th>
-                <th class="px-4 py-3 text-center font-medium">Violations</th>
-                <th class="px-4 py-3 text-left font-medium">Time</th>
-                <th class="px-4 py-3 text-center font-medium">Report</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-800/30">
-              <template x-if="history.length === 0">
-                <tr><td colspan="9" class="px-4 py-10 text-center text-slate-600">No scan history yet</td></tr>
-              </template>
-              <template x-for="h in history" :key="h.evaluation_id">
-                <tr class="hover:bg-white/[0.02] transition">
-                  <td class="px-4 py-3 font-mono text-xs text-indigo-400" x-text="h.evaluation_id"></td>
-                  <td class="px-4 py-3">
-                    <span class="text-xs px-2 py-0.5 rounded"
-                          :class="h.analysis_type==='SQL' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-violet-500/10 text-violet-400'"
-                          x-text="h.analysis_type"></span>
-                  </td>
-                  <td class="px-4 py-3">
-                    <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase"
-                          :class="h.compliant ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'"
-                          x-text="h.compliant ? 'Pass' : 'Fail'"></span>
-                  </td>
-                  <td class="px-4 py-3 font-mono text-xs" x-text="h.compliance_score != null ? h.compliance_score + '%' : '—'"></td>
-                  <td class="px-4 py-3 font-mono text-xs tabular-nums" x-text="Math.round((h.confidence || 0) * 100) + '%'"></td>
-                  <td class="px-4 py-3">
-                    <span x-show="h.llm_assessment" class="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase"
-                          :class="h.llm_assessment === 'COMPLIANT' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'"
-                          x-text="h.llm_assessment"></span>
-                    <span x-show="!h.llm_assessment" class="text-slate-700">—</span>
-                  </td>
-                  <td class="px-4 py-3 text-center tabular-nums"
-                      :class="(h.violated_policies?.length || 0) > 0 ? 'text-red-400' : 'text-slate-600'"
-                      x-text="h.violated_policies?.length || 0"></td>
-                  <td class="px-4 py-3 text-xs text-slate-500" x-text="h.timestamp ? new Date(h.timestamp).toLocaleString() : ''"></td>
-                  <td class="px-4 py-3 text-center">
-                    <button @click="downloadInsightPdf(h.evaluation_id)"
-                            class="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-md bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition font-medium"
-                            title="Download AI Insight as PDF">
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
-                      PDF
-                    </button>
-                  </td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ VIOLATIONS TAB ═══ -->
-    <div x-show="tab === 'violations'" x-cloak class="fade-enter">
-      <div class="card rounded-xl overflow-hidden">
-        <div class="p-4 border-b border-slate-800/60">
-          <p class="text-xs font-semibold text-slate-400">Auto-Logged Violations</p>
-        </div>
-        <div class="p-4 space-y-3">
-          <template x-if="violations.length === 0">
-            <div class="text-center py-10">
-              <svg class="w-12 h-12 mx-auto text-emerald-800 mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              <p class="text-slate-600">No violations detected</p>
+          <div style="padding:1.5rem 1.75rem;">
+            <div class="drop-zone" style="padding:2rem 1.5rem; text-align:center;"
+                 :class="policyDragging && 'drop-active'"
+                 @dragover.prevent="policyDragging = true" @dragleave.prevent="policyDragging = false"
+                 @drop.prevent="handlePolicyDrop($event)"
+                 @click="$refs.policyInput.click()">
+              <svg style="display:block; margin:0 auto 0.6rem; opacity:0.35;" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+              <p style="font-size:13.5px; color:var(--text-body);">Drop PDF files here or <span style="color:var(--sage); font-weight:600; cursor:pointer;">browse</span></p>
+              <p style="font-family:var(--font-mono); font-size:10px; color:var(--text-muted); margin-top:0.3rem;">PDF files only &middot; Multiple files supported</p>
+              <input type="file" x-ref="policyInput" accept=".pdf" multiple class="hidden" @change="handlePolicySelect($event)" />
             </div>
-          </template>
-          <template x-for="v in violations" :key="v.record_id">
-            <div class="card rounded-xl p-4 hover:border-red-500/20 transition">
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
-                  <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z M12 15.75h.007v.008H12v-.008z"/></svg>
-                  <span class="text-sm font-mono font-medium text-white" x-text="v.record_id"></span>
-                  <span class="text-xs px-2 py-0.5 rounded"
-                        :class="v.tier==='SQL' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-violet-500/10 text-violet-400'"
-                        x-text="v.tier || v.analysis_type || 'RAG'"></span>
-                </div>
-                <span class="text-sm font-mono tabular-nums"
-                      :class="(v.confidence || 0) >= 0.95 ? 'text-red-400' : 'text-amber-400'"
-                      x-text="Math.round((v.confidence || 0) * 100) + '% confidence'"></span>
-              </div>
-              <p class="text-sm text-slate-400 mb-3" x-text="((v.explanation || '') + '').substring(0, 300)"></p>
-              <div class="flex flex-wrap gap-1">
-                <template x-for="(r, ri) in (v.cited_rule_ids || [])" :key="ri">
-                  <span class="px-2 py-0.5 rounded text-xs bg-red-500/10 text-red-300" x-text="r"></span>
-                </template>
-              </div>
-              <p class="text-[11px] text-slate-600 mt-2" x-text="v.timestamp ? new Date(v.timestamp).toLocaleString() : ''"></p>
-            </div>
-          </template>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ REVIEWS TAB ═══ -->
-    <div x-show="tab === 'reviews'" x-cloak class="fade-enter">
-      <div class="card rounded-xl overflow-hidden">
-        <div class="p-4 border-b border-slate-800/60">
-          <p class="text-xs font-semibold text-slate-400">Human Review Queue</p>
-        </div>
-        <div class="p-4 space-y-3">
-          <template x-if="reviews.length === 0">
-            <div class="text-center py-10">
-              <svg class="w-12 h-12 mx-auto text-slate-800 mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 00-2.15-1.588H6.911a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661z"/></svg>
-              <p class="text-slate-600">Review queue is empty</p>
-            </div>
-          </template>
-          <template x-for="r in reviews" :key="r.record_id">
-            <div class="card rounded-xl p-4 hover:border-amber-500/20 transition">
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
-                  <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                  <span class="text-sm font-mono font-medium text-white" x-text="r.record_id"></span>
-                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 font-semibold uppercase">Needs Review</span>
-                </div>
-                <span class="text-sm font-mono text-amber-400 tabular-nums" x-text="Math.round((r.confidence || 0) * 100) + '%'"></span>
-              </div>
-              <p class="text-sm text-slate-400 mb-4" x-text="((r.explanation || '') + '').substring(0, 250)"></p>
-              <div class="flex gap-2">
-                <button @click="submitReview(r.record_id, 'confirmed_violation')"
-                        class="px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-xs font-medium hover:bg-red-500/20 transition">
-                  Confirm Violation
-                </button>
-                <button @click="submitReview(r.record_id, 'false_positive')"
-                        class="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-medium hover:bg-emerald-500/20 transition">
-                  False Positive
-                </button>
-                <button @click="submitReview(r.record_id, 'needs_more_info')"
-                        class="px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 text-xs font-medium hover:bg-amber-500/20 transition">
-                  Need More Info
-                </button>
-              </div>
-            </div>
-          </template>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ RULES TAB ═══ -->
-    <div x-show="tab === 'rules'" x-cloak class="fade-enter">
-      <div class="card rounded-xl overflow-hidden">
-        <div class="p-4 border-b border-slate-800/60 flex items-center justify-between">
-          <p class="text-xs font-semibold text-slate-400">Compliance Rules</p>
-          <p class="text-[11px] text-slate-600" x-text="rules.length + ' rules'"></p>
-        </div>
-        <div class="p-4 space-y-1.5 max-h-[600px] overflow-y-auto">
-          <template x-if="rules.length === 0">
-            <p class="text-sm text-slate-600 text-center py-10">No rules extracted yet. Run a scan to ingest policies.</p>
-          </template>
-          <template x-for="rule in rules" :key="rule.rule_id">
-            <div class="flex items-start gap-3 p-3 rounded-lg hover:bg-white/[0.02] transition">
-              <div class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="text-sm font-mono font-medium text-white" x-text="rule.rule_id"></span>
-                  <span class="text-[10px] px-2 py-0.5 rounded font-medium"
-                        :class="(rule.complexity || rule.rule_complexity) === 'complex'
-                          ? 'bg-violet-500/10 text-violet-400'
-                          : 'bg-indigo-500/10 text-indigo-400'"
-                        x-text="(rule.complexity || rule.rule_complexity) === 'complex' ? 'RAG' : 'SQL'"></span>
-                </div>
-                <p class="text-sm text-slate-300 mb-0.5" x-text="rule.description || ''"></p>
-                <p class="text-xs text-slate-600">
-                  <span class="text-slate-500">Condition:</span>
-                  <span x-text="rule.condition || '—'"></span>
-                </p>
-              </div>
-            </div>
-          </template>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ POLICIES TAB ═══ -->
-    <div x-show="tab === 'policies'" x-cloak class="fade-enter">
-      <div class="max-w-2xl mx-auto space-y-6">
-
-        <!-- Upload Section -->
-        <div class="card rounded-2xl p-8">
-          <div class="text-center mb-6">
-            <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-            </div>
-            <h2 class="text-lg font-bold text-white">Upload Policy PDFs</h2>
-            <p class="text-sm text-slate-500 mt-1">Upload one or more compliance policy PDFs. Phase 1 will auto re-run when policies change.</p>
-          </div>
-
-          <!-- Drop Zone -->
-          <div class="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200"
-               :class="policyDragging ? 'border-emerald-500 bg-emerald-500/5' : 'border-slate-700 hover:border-slate-500'"
-               @dragover.prevent="policyDragging = true" @dragleave.prevent="policyDragging = false"
-               @drop.prevent="handlePolicyDrop($event)"
-               @click="$refs.policyInput.click()">
-            <svg class="w-10 h-10 mx-auto mb-3" :class="policyDragging ? 'text-emerald-400' : 'text-slate-600'" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-            <p class="text-slate-400 text-sm">Drop PDF files here or <span class="text-emerald-400 font-medium">browse</span></p>
-            <p class="text-xs text-slate-600 mt-1">PDF files only · Multiple files supported</p>
-            <input type="file" x-ref="policyInput" accept=".pdf" multiple class="hidden" @change="handlePolicySelect($event)" />
-          </div>
-
-          <!-- Selected files queue -->
-          <template x-if="policyFiles.length > 0">
-            <div class="mt-4 space-y-2">
-              <p class="text-xs font-semibold text-slate-400 mb-2">Ready to upload (<span x-text="policyFiles.length"></span> files)</p>
-              <template x-for="(pf, pi) in policyFiles" :key="pi">
-                <div class="card rounded-lg p-3 flex items-center justify-between">
-                  <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                      <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+            <template x-if="policyFiles.length > 0">
+              <div style="margin-top:1rem;">
+                <div class="section-label-sm" style="margin-bottom:0.5rem;">Ready to upload (<span x-text="policyFiles.length"></span> files)</div>
+                <div style="display:flex; flex-direction:column; gap:0.4rem; margin-bottom:0.9rem;">
+                  <template x-for="(pf, pi) in policyFiles" :key="pi">
+                    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--panel); border:1px solid var(--border); border-radius:7px; padding:0.6rem 0.9rem;">
+                      <div style="display:flex; align-items:center; gap:0.6rem;">
+                        <div style="width:30px; height:30px; background:rgba(45,106,79,0.1); border-radius:5px; display:flex; align-items:center; justify-content:center;">
+                          <svg width="14" height="14" fill="none" stroke="var(--sage)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                        </div>
+                        <div>
+                          <div style="font-size:13px; font-weight:500; color:var(--navy);" x-text="pf.name"></div>
+                          <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-muted);" x-text="formatBytes(pf.size)"></div>
+                        </div>
+                      </div>
+                      <button @click="removePolicyFile(pi)" style="width:26px; height:26px; border-radius:4px; border:1px solid var(--border); background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#999;" onmouseover="this.style.color='var(--rose)'; this.style.borderColor='var(--rose)'" onmouseout="this.style.color='#999'; this.style.borderColor='var(--border)'">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                      </button>
                     </div>
-                    <div>
-                      <p class="text-sm font-medium text-white" x-text="pf.name"></p>
-                      <p class="text-xs text-slate-500" x-text="formatBytes(pf.size)"></p>
-                    </div>
-                  </div>
-                  <button @click="removePolicyFile(pi)" class="p-1 rounded hover:bg-white/5 text-slate-400 hover:text-red-400 transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                  </button>
+                  </template>
                 </div>
-              </template>
-
-              <!-- Upload button -->
-              <button @click="uploadPolicies()" :disabled="policyUploading"
-                      class="w-full mt-3 py-3 rounded-xl text-sm font-semibold transition-all duration-200 shadow-lg"
-                      :class="!policyUploading
-                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/20'
-                        : 'bg-slate-800 text-slate-500 cursor-not-allowed shadow-none'">
-                <span x-show="!policyUploading">Upload <span x-text="policyFiles.length"></span> Policy PDF(s)</span>
-                <span x-show="policyUploading" class="flex items-center justify-center gap-2">
-                  <svg class="w-4 h-4 spinner" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M2.985 14.652"/></svg>
-                  Uploading...
-                </span>
-              </button>
-            </div>
-          </template>
+                <button @click="uploadPolicies()" :disabled="policyUploading" class="btn btn-sage" style="width:100%; justify-content:center; padding:0.65rem;">
+                  <span x-show="!policyUploading">Upload <span x-text="policyFiles.length"></span> Policy PDF(s)</span>
+                  <span x-show="policyUploading" style="display:flex; align-items:center; gap:0.4rem;">
+                    <svg class="spinner" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M2.985 14.652"/></svg>
+                    Uploading...
+                  </span>
+                </button>
+              </div>
+            </template>
+          </div>
         </div>
 
-        <!-- Current Policies List -->
-        <div class="card rounded-xl overflow-hidden">
-          <div class="p-4 border-b border-slate-800/60 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <p class="text-xs font-semibold text-slate-400">Current Policy PDFs</p>
-              <span class="text-[10px] px-2 py-0.5 rounded-full font-medium"
-                    :class="policies.length > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'"
-                    x-text="policies.length + ' loaded'"></span>
-            </div>
-            <button x-show="policies.length > 0" @click="deleteAllPolicies()"
-                    class="text-[11px] px-3 py-1 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition font-medium">
-              Delete All
-            </button>
+        <!-- Existing Policies -->
+        <div class="card" style="overflow:hidden;">
+          <div class="card-header">
+            <span class="card-title">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>
+              Current Policy PDFs
+              <span class="badge" :class="policies.length > 0 ? 'badge-pass' : 'badge-fail'" x-text="policies.length + ' loaded'"></span>
+            </span>
+            <button x-show="policies.length > 0" @click="deleteAllPolicies()" class="btn btn-danger btn-sm">Delete All</button>
           </div>
-
-          <div class="p-4 space-y-1.5 max-h-[500px] overflow-y-auto">
+          <div style="max-height:450px; overflow-y:auto;">
             <template x-if="policies.length === 0">
-              <div class="text-center py-10">
-                <svg class="w-12 h-12 mx-auto mb-3 text-slate-700" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-                <p class="text-sm text-red-400 font-medium">No policy PDFs uploaded</p>
-                <p class="text-xs text-slate-600 mt-1">Upload at least one policy PDF to enable compliance scanning.</p>
+              <div style="padding:2.5rem; text-align:center;">
+                <div style="font-size:13px; font-weight:600; color:var(--rose); margin-bottom:0.25rem;">No policy PDFs uploaded</div>
+                <div style="font-size:12px; color:var(--text-muted);">Upload at least one policy PDF to enable compliance scanning.</div>
               </div>
             </template>
             <template x-for="policy in policies" :key="policy.filename">
-              <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.02] transition group">
-                <div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-                  <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+              <div style="display:flex; align-items:center; gap:0.75rem; padding:0.8rem 1.1rem; border-bottom:1px solid var(--border-light); transition:background 0.12s;" class="group"
+                onmouseover="this.style.background='#FAFAF7'; this.querySelector('.del-btn').style.opacity='1'" onmouseout="this.style.background='transparent'; this.querySelector('.del-btn').style.opacity='0'">
+                <div style="width:36px; height:36px; background:rgba(45,106,79,0.08); border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  <svg width="18" height="18" fill="none" stroke="var(--sage)" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
                 </div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-white truncate" x-text="policy.filename"></p>
-                  <p class="text-xs text-slate-500">
-                    <span x-text="formatBytes(policy.size)"></span>
-                    <span class="mx-1">·</span>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:13px; font-weight:500; color:var(--navy); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" x-text="policy.filename"></div>
+                  <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-muted);">
+                    <span x-text="formatBytes(policy.size)"></span> &middot;
                     <span x-text="new Date(policy.uploaded_at).toLocaleDateString() + ' ' + new Date(policy.uploaded_at).toLocaleTimeString()"></span>
-                  </p>
+                  </div>
                 </div>
-                <button @click="deletePolicy(policy.filename)"
-                        class="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-all">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                <button @click="deletePolicy(policy.filename)" class="del-btn" style="width:30px; height:30px; border-radius:5px; border:1px solid var(--border); background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:0; transition:opacity 0.15s; color:#AAA;" onmouseover="this.style.color='var(--rose)'; this.style.borderColor='var(--rose)'; this.style.background='#FEF2F2'" onmouseout="this.style.color='#AAA'; this.style.borderColor='var(--border)'; this.style.background='transparent'">
+                  <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
                 </button>
               </div>
             </template>
           </div>
         </div>
-
       </div>
-    </div>
 
+    </main>
+
+    <!-- FOOTER -->
+    <footer style="background:var(--card); border-top:1px solid var(--border); padding:0.75rem 2rem; display:flex; align-items:center; justify-content:space-between;">
+      <span style="font-family:var(--font-mono); font-size:10px; letter-spacing:0.08em; color:var(--text-muted);">Team RuleSmiths</span>
+      <span style="font-family:var(--font-mono); font-size:10px; letter-spacing:0.06em; color:var(--text-muted);">Powered by LangChain &middot; LangGraph &middot; GPT-4o</span>
+    </footer>
   </div>
+</div>
 
-  <!-- FOOTER -->
-  <footer class="border-t border-slate-800/40 mt-10 py-4">
-    <div class="max-w-[1440px] mx-auto px-5 flex items-center justify-between text-[11px] text-slate-700">
-      <span>Compliance Shield v2.0</span>
-      <span>Powered by LangChain · LangGraph · GPT-4o</span>
-    </div>
-  </footer>
-
-<!-- ══════════════════════════════════════════════════════════════ -->
 <script>
 function app() {
   return {
-    // State
     tab: 'dashboard',
     tabs: [
       { id: 'dashboard', label: 'Dashboard' },
@@ -737,64 +1147,40 @@ function app() {
       { id: 'rules',     label: 'Rules' },
       { id: 'policies',  label: 'Policies' },
     ],
-    data: {},
-    history: [],
-    violations: [],
-    reviews: [],
-    rules: [],
-    policies: [],
-    policyFiles: [],
-    policyUploading: false,
-    policyDragging: false,
-    connected: false,
-    loading: false,
-
-    // Scan state
-    scanFile: null,
-    scanning: false,
-    scanProgress: 0,
-    scanStatus: '',
-    scanResult: null,
-    scanError: false,
-    dragging: false,
-
+    data: {}, history: [], violations: [], reviews: [], rules: [], policies: [],
+    policyFiles: [], policyUploading: false, policyDragging: false,
+    connected: false, loading: false,
+    scanFile: null, scanning: false, scanProgress: 0, scanStatus: '', scanResult: null, scanError: false, dragging: false,
     _refreshTimer: null,
-
-    // Chart data (updated in refresh)
-    complianceRate: 0,
-    gaugeColor: '#f87171',
-    gaugeDash: 251.2,
+    complianceRate: 0, gaugeColor: '#C0392B', gaugeDash: 251.2,
+    gaugeArc: 251.2,
     severityBars: [
-      { label: 'Critical', value: 0, color: '#ef4444', pct: 0 },
-      { label: 'High',     value: 0, color: '#f97316', pct: 0 },
-      { label: 'Medium',   value: 0, color: '#eab308', pct: 0 },
-      { label: 'Low',      value: 0, color: '#22c55e', pct: 0 },
+      { label: 'Critical', value: 0, color: '#C0392B', pct: 0 },
+      { label: 'High',     value: 0, color: '#D97706', pct: 0 },
+      { label: 'Medium',   value: 0, color: '#FBB813', pct: 0 },
+      { label: 'Low',      value: 0, color: '#2D6A4F', pct: 0 },
     ],
-    sqlCount: 0,
-    ragCount: 0,
-    totalAnalysed: 0,
-    sqlDonutDash: '0 314.16',
-    ragDonutDash: '0 314.16',
-    ragDonutOffset: 78.5,
-
+    sqlCount: 0, ragCount: 0, totalAnalysed: 0,
+    sqlDonutDash: '0 314.16', ragDonutDash: '0 314.16', ragDonutOffset: 78.5,
     metricCards: [
-      { key: 'total_scans',     label: 'Total Scans',     color: 'text-white' },
-      { key: 'compliant',       label: 'Compliant',       color: 'text-emerald-400' },
-      { key: 'non_compliant',   label: 'Non-Compliant',   color: 'text-red-400' },
-      { key: 'compliance_rate', label: 'Rate',             color: 'text-white' },
-      { key: 'pending_reviews', label: 'Pending Reviews',  color: 'text-amber-400' },
-      { key: 'total_rules',    label: 'Active Rules',     color: 'text-violet-400' },
+      { key: 'total_scans',     label: 'Total Scans',     cardClass: 'kpi-navy',  valueClass: '' },
+      { key: 'compliant',       label: 'Compliant',       cardClass: 'kpi-good',  valueClass: 'val-good' },
+      { key: 'non_compliant',   label: 'Non-Compliant',   cardClass: 'kpi-bad',   valueClass: 'val-bad' },
+      { key: 'compliance_rate', label: 'Rate',             cardClass: 'kpi-good',  valueClass: 'val-good' },
+      { key: 'pending_reviews', label: 'Pending Reviews',  cardClass: 'kpi-warn',  valueClass: 'val-warn' },
+      { key: 'total_rules',    label: 'Active Rules',     cardClass: 'kpi-teal',  valueClass: 'val-teal' },
     ],
 
-    // ── Lifecycle ──
-    async init() {
-      await this.refresh();
-      this._refreshTimer = setInterval(() => {
-        if (this.tab === 'dashboard') this.refresh();
-      }, 15000);
+    pageTitle() {
+      const titles = { dashboard:'Dashboard', scan:'New Scan', history:'Scan History', violations:'Violations', reviews:'Review Queue', rules:'Rules', policies:'Policies' };
+      return titles[this.tab] || 'Dashboard';
     },
 
-    // ── Tab switching — loads data for the target tab ──
+    async init() {
+      await this.refresh();
+      this._refreshTimer = setInterval(() => { if (this.tab === 'dashboard') this.refresh(); }, 15000);
+    },
+
     switchTab(id) {
       this.tab = id;
       if (id === 'history')    this.loadHistory();
@@ -807,43 +1193,30 @@ function app() {
 
     formatMetric(key) {
       const val = this.data.metrics?.[key];
-      if (val == null) return '—';
+      if (val == null) return '\u2014';
       if (key === 'compliance_rate') return val + '%';
       return val;
     },
 
-    // ── API helper ──
     async api(path) {
-      try {
-        const res = await fetch(path);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return await res.json();
-      } catch (e) {
-        console.warn('API error', path, e);
-        throw e;
-      }
+      try { const res = await fetch(path); if (!res.ok) throw new Error('HTTP ' + res.status); return await res.json(); }
+      catch (e) { console.warn('API error', path, e); throw e; }
     },
 
-    // ── Recompute chart data from API response ──
     updateChartData() {
       const m = this.data.metrics || {};
-      // Gauge
       this.complianceRate = Math.round(m.compliance_rate ?? 0);
-      this.gaugeColor = this.complianceRate >= 80 ? '#4ade80' : this.complianceRate >= 50 ? '#facc15' : '#f87171';
+      this.gaugeColor = this.complianceRate >= 80 ? '#2D6A4F' : this.complianceRate >= 50 ? '#D97706' : '#C0392B';
       this.gaugeDash = 251.2 - (251.2 * this.complianceRate / 100);
-
-      // Severity bars
       const s = this.data.severity || {};
       const vals = [s.critical||0, s.high||0, s.medium||0, s.low||0];
       const maxVal = Math.max(...vals, 1);
       this.severityBars = [
-        { label: 'Critical', value: vals[0], color: '#ef4444', pct: (vals[0]/maxVal)*100 },
-        { label: 'High',     value: vals[1], color: '#f97316', pct: (vals[1]/maxVal)*100 },
-        { label: 'Medium',   value: vals[2], color: '#eab308', pct: (vals[2]/maxVal)*100 },
-        { label: 'Low',      value: vals[3], color: '#22c55e', pct: (vals[3]/maxVal)*100 },
+        { label: 'Critical', value: vals[0], color: '#C0392B', pct: (vals[0]/maxVal)*100 },
+        { label: 'High',     value: vals[1], color: '#D97706', pct: (vals[1]/maxVal)*100 },
+        { label: 'Medium',   value: vals[2], color: '#FBB813', pct: (vals[2]/maxVal)*100 },
+        { label: 'Low',      value: vals[3], color: '#2D6A4F', pct: (vals[3]/maxVal)*100 },
       ];
-
-      // Donut
       const recent = this.data.recent_activity || [];
       this.sqlCount = recent.filter(r => r.type === 'SQL').length;
       this.ragCount = recent.filter(r => r.type === 'RAG').length;
@@ -854,37 +1227,18 @@ function app() {
       this.ragDonutOffset = 78.5 - (this.sqlCount / total * 314.16);
     },
 
-    // ── Dashboard refresh ──
     async refresh() {
       this.loading = true;
-      try {
-        this.data = await this.api('/api/dashboard');
-        this.connected = true;
-        this.updateChartData();
-      } catch (e) {
-        this.connected = false;
-      }
+      try { this.data = await this.api('/api/dashboard'); this.connected = true; this.updateChartData(); }
+      catch (e) { this.connected = false; }
       this.loading = false;
     },
 
-    // ── Tab data loaders ──
-    async loadHistory() {
-      try { this.history = await this.api('/api/history'); } catch(e) { this.history = []; }
-    },
-    async loadViolations() {
-      try { this.violations = await this.api('/api/violations'); } catch(e) { this.violations = []; }
-    },
-    async loadReviews() {
-      try { this.reviews = await this.api('/api/reviews'); } catch(e) { this.reviews = []; }
-    },
-    async loadRules() {
-      try { this.rules = await this.api('/api/rules'); } catch(e) { this.rules = []; }
-    },
-
-    // ── Policy management ──
-    async loadPolicies() {
-      try { this.policies = await this.api('/api/policies'); } catch(e) { this.policies = []; }
-    },
+    async loadHistory()    { try { this.history    = await this.api('/api/history');    } catch(e) { this.history = []; } },
+    async loadViolations() { try { this.violations = await this.api('/api/violations'); } catch(e) { this.violations = []; } },
+    async loadReviews()    { try { this.reviews    = await this.api('/api/reviews');    } catch(e) { this.reviews = []; } },
+    async loadRules()      { try { this.rules      = await this.api('/api/rules');      } catch(e) { this.rules = []; } },
+    async loadPolicies()   { try { this.policies   = await this.api('/api/policies');   } catch(e) { this.policies = []; } },
 
     handlePolicyDrop(e) {
       this.policyDragging = false;
@@ -893,7 +1247,6 @@ function app() {
       if (pdfs.length === 0) { alert('Only PDF files are allowed.'); return; }
       this.policyFiles = [...this.policyFiles, ...pdfs];
     },
-
     handlePolicySelect(e) {
       const files = Array.from(e.target?.files || []);
       const pdfs = files.filter(f => f.name.toLowerCase().endsWith('.pdf'));
@@ -901,10 +1254,7 @@ function app() {
       this.policyFiles = [...this.policyFiles, ...pdfs];
       e.target.value = '';
     },
-
-    removePolicyFile(index) {
-      this.policyFiles = this.policyFiles.filter((_, i) => i !== index);
-    },
+    removePolicyFile(index) { this.policyFiles = this.policyFiles.filter((_, i) => i !== index); },
 
     async uploadPolicies() {
       if (this.policyFiles.length === 0 || this.policyUploading) return;
@@ -917,97 +1267,50 @@ function app() {
         if (!res.ok) throw new Error(data.detail || 'Upload failed');
         this.policyFiles = [];
         await this.loadPolicies();
-        alert(`Successfully uploaded ${data.count} policy PDF(s). Phase 1 will re-run on next scan.`);
+        alert('Successfully uploaded ' + data.count + ' policy PDF(s). Phase 1 will re-run on next scan.');
       } catch(e) { alert('Upload error: ' + e.message); }
       this.policyUploading = false;
     },
 
     async deletePolicy(filename) {
-      if (!confirm(`Delete policy "${filename}"? This cannot be undone.`)) return;
-      try {
-        const res = await fetch('/api/policies/' + encodeURIComponent(filename), { method: 'DELETE' });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Delete failed');
-        await this.loadPolicies();
-      } catch(e) { alert('Delete error: ' + e.message); }
+      if (!confirm('Delete policy "' + filename + '"? This cannot be undone.')) return;
+      try { const res = await fetch('/api/policies/' + encodeURIComponent(filename), { method: 'DELETE' }); const data = await res.json(); if (!res.ok) throw new Error(data.detail || 'Delete failed'); await this.loadPolicies(); }
+      catch(e) { alert('Delete error: ' + e.message); }
     },
 
     async deleteAllPolicies() {
       if (!confirm('Delete ALL policy PDFs? Scans will not work until new policies are uploaded.')) return;
-      try {
-        const res = await fetch('/api/policies', { method: 'DELETE' });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Delete failed');
-        await this.loadPolicies();
-        alert(`Deleted ${data.count} policy PDF(s).`);
-      } catch(e) { alert('Delete error: ' + e.message); }
+      try { const res = await fetch('/api/policies', { method: 'DELETE' }); const data = await res.json(); if (!res.ok) throw new Error(data.detail || 'Delete failed'); await this.loadPolicies(); alert('Deleted ' + data.count + ' policy PDF(s).'); }
+      catch(e) { alert('Delete error: ' + e.message); }
     },
 
-    // ── History management ──
     async clearHistory() {
-      if (!confirm('Clear scan logs? This moves evaluation files to the recycle bin.\nViolations and reviews are preserved.')) return;
-      try {
-        const res = await fetch('/api/history/clear', { method: 'POST' });
-        const data = await res.json();
-        this.history = [];
-        this.refresh();
-        alert(`Cleared! ${data.moved_files} files moved to recycle bin.`);
-      } catch(e) { alert('Error clearing history: ' + e.message); }
+      if (!confirm('Clear scan logs? This moves evaluation files to the recycle bin.')) return;
+      try { const res = await fetch('/api/history/clear', { method: 'POST' }); const data = await res.json(); this.history = []; this.refresh(); alert('Cleared! ' + data.moved_files + ' files moved to recycle bin.'); }
+      catch(e) { alert('Error clearing history: ' + e.message); }
     },
 
     async deleteAllHistory() {
-      if (!confirm('DELETE ALL data? This moves everything (evaluations, violations, reviews, reports) to the recycle bin.\n\nAll files are preserved in recyclebin/ for recovery.')) return;
-      try {
-        const res = await fetch('/api/history/delete-all', { method: 'DELETE' });
-        const data = await res.json();
-        this.history = [];
-        this.violations = [];
-        this.reviews = [];
-        this.refresh();
-        alert(`Deleted all! ${data.moved_files} files moved to recycle bin.`);
-      } catch(e) { alert('Error deleting: ' + e.message); }
+      if (!confirm('DELETE ALL data? This moves everything to the recycle bin.')) return;
+      try { const res = await fetch('/api/history/delete-all', { method: 'DELETE' }); const data = await res.json(); this.history = []; this.violations = []; this.reviews = []; this.refresh(); alert('Deleted all! ' + data.moved_files + ' files moved to recycle bin.'); }
+      catch(e) { alert('Error deleting: ' + e.message); }
     },
 
     downloadInsightPdf(evalId) {
-      const a = document.createElement('a');
-      a.href = '/api/history/' + evalId + '/pdf';
-      a.download = 'AI_Insight_' + evalId + '.pdf';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      const a = document.createElement('a'); a.href = '/api/history/' + evalId + '/pdf'; a.download = 'AI_Insight_' + evalId + '.pdf'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
     },
 
-    // ── Review actions ──
     async submitReview(recordId, decision) {
-      try {
-        await fetch('/api/review/decide', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ record_id: recordId, decision, reviewer: 'dashboard_user' })
-        });
-        await this.loadReviews();
-        this.refresh();
-      } catch(e) { console.error('Review submit error:', e); }
+      try { await fetch('/api/review/decide', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ record_id: recordId, decision, reviewer: 'dashboard_user' }) }); await this.loadReviews(); this.refresh(); }
+      catch(e) { console.error('Review submit error:', e); }
     },
 
-    // ── File upload ──
-    handleDrop(e) {
-      const f = e.dataTransfer?.files?.[0];
-      if (f) this.selectFile(f);
-    },
-    handleFileSelect(e) {
-      const f = e.target?.files?.[0];
-      if (f) this.selectFile(f);
-    },
+    handleDrop(e) { const f = e.dataTransfer?.files?.[0]; if (f) this.selectFile(f); },
+    handleFileSelect(e) { const f = e.target?.files?.[0]; if (f) this.selectFile(f); },
     selectFile(file) {
       const ext = (file.name.split('.').pop() || '').toLowerCase();
-      if (!['csv', 'pdf'].includes(ext)) {
-        alert('Please upload a CSV or PDF file.');
-        return;
-      }
-      this.scanFile = file;
-      this.scanResult = null;
-      this.scanError = false;
+      if (!['csv', 'pdf'].includes(ext)) { alert('Please upload a CSV or PDF file.'); return; }
+      this.scanFile = file; this.scanResult = null; this.scanError = false;
     },
     formatBytes(bytes) {
       if (!bytes) return '0 B';
@@ -1017,67 +1320,27 @@ function app() {
       return (bytes / 1073741824).toFixed(1) + ' GB';
     },
 
-    // ── Start scan ──
     async startScan() {
       if (!this.scanFile || this.scanning) return;
-
-      this.scanning = true;
-      this.scanProgress = 0;
-      this.scanResult = null;
-      this.scanError = false;
-      this.scanStatus = 'Uploading file...';
-
-      const formData = new FormData();
-      formData.append('file', this.scanFile);
-
+      this.scanning = true; this.scanProgress = 0; this.scanResult = null; this.scanError = false; this.scanStatus = 'Uploading file...';
+      const formData = new FormData(); formData.append('file', this.scanFile);
       try {
         this.scanProgress = 10;
         const res = await fetch('/api/scan', { method: 'POST', body: formData });
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || 'Upload failed');
-
-        const scanId = data.scan_id;
-        this.scanStatus = 'Running compliance pipeline...';
-        this.scanProgress = 25;
-
-        // Poll for status
+        const scanId = data.scan_id; this.scanStatus = 'Running compliance pipeline...'; this.scanProgress = 25;
         let attempts = 0;
         const poll = setInterval(async () => {
-          attempts++;
-          this.scanProgress = Math.min(25 + (attempts * 0.5), 92);
-
+          attempts++; this.scanProgress = Math.min(25 + (attempts * 0.5), 92);
           try {
-            const sr = await fetch('/api/scans/' + scanId);
-            const status = await sr.json();
-
-            if (status.status === 'completed') {
-              clearInterval(poll);
-              this.scanProgress = 100;
-              this.scanStatus = 'Complete!';
-              this.scanResult = status.result;
-              this.scanning = false;
-              this.refresh();
-            } else if (status.status === 'failed') {
-              clearInterval(poll);
-              this.scanProgress = 100;
-              this.scanStatus = 'Failed: ' + (status.error || 'Unknown error');
-              this.scanError = true;
-              this.scanning = false;
-            }
-          } catch(e) { /* keep polling */ }
-
-          if (attempts >= 180) {
-            clearInterval(poll);
-            this.scanStatus = 'Timeout — check history for results.';
-            this.scanning = false;
-          }
+            const sr = await fetch('/api/scans/' + scanId); const status = await sr.json();
+            if (status.status === 'completed') { clearInterval(poll); this.scanProgress = 100; this.scanStatus = 'Complete!'; this.scanResult = status.result; this.scanning = false; this.refresh(); }
+            else if (status.status === 'failed') { clearInterval(poll); this.scanProgress = 100; this.scanStatus = 'Failed: ' + (status.error || 'Unknown error'); this.scanError = true; this.scanning = false; }
+          } catch(e) {}
+          if (attempts >= 180) { clearInterval(poll); this.scanStatus = 'Timeout \u2014 check history for results.'; this.scanning = false; }
         }, 2000);
-
-      } catch (err) {
-        this.scanStatus = 'Error: ' + err.message;
-        this.scanError = true;
-        this.scanning = false;
-      }
+      } catch (err) { this.scanStatus = 'Error: ' + err.message; this.scanError = true; this.scanning = false; }
     },
   };
 }
